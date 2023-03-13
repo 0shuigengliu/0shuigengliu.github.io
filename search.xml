@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search> 
+  
+  
+    
+    <entry>
+      <title>Ubuntu22.04 NFS服务挂载到开发板的时遇到的BUG</title>
+      <link href="/posts/6416c38f/"/>
+      <url>/posts/6416c38f/</url>
+      
+        <content type="html"><![CDATA[<h1 id="错误一：即使关闭了防火墙，连接依旧超时"><a href="#错误一：即使关闭了防火墙，连接依旧超时" class="headerlink" title="错误一：即使关闭了防火墙，连接依旧超时"></a>错误一：即使关闭了防火墙，连接依旧超时</h1><p><strong>错误描述：</strong>在Ubuntu设置好NFS服务后进行挂载，发现<strong>即使关闭了防火墙，也不起作用</strong></p><p>显示：<img src="/posts/6416c38f/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20230310135006.png" alt="微信图片_20230310135006"></p><p><strong>错误来源</strong>：开发板安装的NFS服务版本过低，Ubuntu22.04下载的NFS版本高，默认情况下不支持较低版本NFS挂载服务，需要我们手动对配置进行修改。</p><p><strong>解决方法：</strong></p><p>​1.输入代码<code>cat /proc/fs/nfsd/versions</code>查看当前NFS服务所支持的版本，输出结果如果为</p><p><img src="/posts/6416c38f/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20230310135112.png" alt="微信图片_20230310135112"></p><p><em>可以看见其他数字前面都是+号，唯独2前面是-号，说明此时NFS服务不支持NFS2版本进行挂载服务，从而出现了连接超时。</em></p><p>​2.修改虚拟机的nfs配置，<code>vim /etc/default/nfs-kernel-server</code>，修改三个参数为</p><p>​<code>RPCNFSDCOUNT=&quot;-V 2 8&quot;</code>;<code>RPCMOUNTDOPTS=&quot;-V 2 --manage-gids&quot;</code>;<code>RPCSVCGSSDOPTS=&quot;--nfs-version 2,3,4 --debug --syslog&quot;;</code></p><p>​    3.输入<code>RPCSVCGSSDOPTS=&quot;--nfs-version 2,3,4 --debug --syslog&quot;</code>,修改两个参数</p><p>​<code>udp=y</code>;<code>vers2=y</code></p><p>​4.重启nfs服务（<code>sudo /etc/init.d/portmap restart</code>;<code>sudo /etc/init.d/**nfs**-kernel-server restart</code>），再查看现在支持的nfs版本（<code>cat /proc/fs/nfsd/versions</code>）。</p><p><img src="/posts/6416c38f/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20230310140318.png" alt="微信图片_20230310140318"></p><p><em>可以看见目前已经支持了nfs2，可以正常进行挂载服务</em></p><p><em>此方法学习自<a href="https://blog.csdn.net/weixin_56646002/article/details/127388021?spm=1001.2014.3001.5506">门牙会稍息</a></em></p><h1 id="错误二：成功挂载后，双方文件夹不互相同步"><a href="#错误二：成功挂载后，双方文件夹不互相同步" class="headerlink" title="错误二：成功挂载后，双方文件夹不互相同步"></a>错误二：成功挂载后，双方文件夹不互相同步</h1><p><strong>错误来源：</strong>假设Ubuntu为A,开发板为B，我们想将<code>A:/home/nfs </code>挂载至<code>B:/mnt</code>文件夹，挂载时A正处于<code>/home/nfs</code>B正处于<code>B:/mnt</code>路径下，问题原因我尚未理解。</p><p><strong>解决办法：</strong>先解决开发板的挂载状态，再返回根目录后进行挂载</p><h1 id="错误三：安装交叉编译环境时，配置好环境后输入arm-linux-gcc-v提示command-not-founnd"><a href="#错误三：安装交叉编译环境时，配置好环境后输入arm-linux-gcc-v提示command-not-founnd" class="headerlink" title="错误三：安装交叉编译环境时，配置好环境后输入arm-linux-gcc -v提示command not founnd"></a>错误三：安装交叉编译环境时，配置好环境后输入<code>arm-linux-gcc -v</code>提示<code>command not founnd</code></h1><p><strong>错误原因：</strong>有可能安装了32位版本的编译器，而我们的Ubuntu是64位的</p><p><strong>解决办法：</strong>安装32位依赖包，输入<code>apt install lib32z1</code>，再输入<code>arm-linux-gcc -v</code>查看编译器版本</p><p><img src="/posts/6416c38f/image-20230310142124403.png" alt="image-20230310142124403"></p><p><em>gcc可以正常使用</em></p>]]></content>
+      
+      
+      <categories>
+          
+          <category> BUG大全 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> Ubuntu </tag>
+            
+            <tag> 嵌入式系统 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>使用Vmware虚拟机无法ping通开发板</title>
+      <link href="/posts/76f723b3/"/>
+      <url>/posts/76f723b3/</url>
+      
+        <content type="html"><![CDATA[<h1 id="问题详细描述"><a href="#问题详细描述" class="headerlink" title="问题详细描述"></a>问题详细描述</h1><p>​嵌入式课程中，本人使用Vmware虚拟机运行Ubuntu22.04操作系统，无法与开发版ping通，导致后续实验无法进行。本人的使用的轻薄本没有直接的网线接口，使用的usb转接口连接网线。</p><img src="9bcddc0a6497ba4c8a9889f6a3c1e9e.jpg" alt="9bcddc0a6497ba4c8a9889f6a3c1e9e" style="zoom: 33%;" /><h1 id="一、确保win10电脑与VMware有关的服务处于开启状态"><a href="#一、确保win10电脑与VMware有关的服务处于开启状态" class="headerlink" title="一、确保win10电脑与VMware有关的服务处于开启状态"></a>一、确保win10电脑与VMware有关的服务处于开启状态</h1><p>​在win10系统中使用【win+r】快捷键，输入services.msc，进入管理win10服务的平台</p><img src="image-20230313183818115.png" alt="image-20230313183818115" style="zoom: 67%;" /><p>​在列表中找到以VMware为开头的服务，查看状态，如果处于关闭状态则将其启动。</p><p><img src="/posts/76f723b3/image-20230313184009878.png" alt="image-20230313184009878"></p><h1 id="二、插入网线，将WLAN与网线共享网络，使电脑可以识别网线为网卡"><a href="#二、插入网线，将WLAN与网线共享网络，使电脑可以识别网线为网卡" class="headerlink" title="二、插入网线，将WLAN与网线共享网络，使电脑可以识别网线为网卡"></a>二、插入网线，将WLAN与网线共享网络，使电脑可以识别网线为网卡</h1><blockquote><p>一般外设接入电脑后，如果Vmware虚拟机处于开启状态，会弹出窗口询问接入主机还是接入虚拟机，插入网线后，我们选择接入主机而不是虚拟机，（连接开发板的数据线需要接入虚拟机）</p></blockquote><p>找到win10状态栏中的网络图标（平常连接WiFi的地方），鼠标右键选择<em>打开”网络和Internet”设置</em>，在高级网络设置中，选择更改设配器选项，</p><img src="image-20230313184707143.png" alt="image-20230313184707143" style="zoom: 33%;" /><p>进入到网络连接界面，本人的笔记本使用WLAN连接WiFi，以太网3（）是开发板与笔记本连接的网线<em>（如果不确定是哪个，可以反复插拔观察确认）</em>，所以我们需要将<em>WLAN与以太网3</em>进行网络共享。</p><p><img src="/posts/76f723b3/image-20230313185750049.png" alt="image-20230313185750049"></p><p>鼠标右键WLAN，选择属性，共享，勾选*允许其他网络用户通过此计算机的 Internet 连接来连接(N)*，在下拉选项中选择以太网3（根据自己的电脑情况进行灵活变更），点击确定。</p><p><img src="/posts/76f723b3/image-20230313185314154.png" alt="image-20230313185314154"></p><p>确定之后，可以看见<em>网络连接界面以太网3</em>下面如同WLAN一样，多出了一行字母，倘若看不见，就切换查看模式为平铺，本人的电脑显示为<strong>Realtek USB GbE Family Controller</strong>，我们后面需要用到这串字符。</p><h1 id="三、修改Vmware的网络设置"><a href="#三、修改Vmware的网络设置" class="headerlink" title="三、修改Vmware的网络设置"></a>三、修改Vmware的网络设置</h1><h2 id="修改网络适配器选项"><a href="#修改网络适配器选项" class="headerlink" title="修改网络适配器选项"></a>修改网络适配器选项</h2><p>打开Ubuntu后在Vmware上方的菜单栏中选择虚拟机（M），设置，硬件，在列表中选择网络适配器，自定义选择<strong>VMnet0</strong>，选择确定</p><img src="image-20230313191353577.png" alt="image-20230313191353577" style="zoom:50%;" /><h2 id="修改虚拟网络编辑器"><a href="#修改虚拟网络编辑器" class="headerlink" title="修改虚拟网络编辑器"></a>修改虚拟网络编辑器</h2><p>在Vmware菜单栏中，选择编辑，虚拟网络编辑器，点击更改设置</p><img src="image-20230313191517621.png" alt="image-20230313191517621" style="zoom:50%;" /><p>授予管理员权限后，会多出来VMnet0，选择模式为桥接模式，并与网线网卡，即上文的<strong>Realtek USB GbE Family Controller</strong>（不同人可能是不同的名）相桥接，确定。</p><h1 id="四、开发板与虚拟机互ping"><a href="#四、开发板与虚拟机互ping" class="headerlink" title="四、开发板与虚拟机互ping"></a>四、开发板与虚拟机互ping</h1><h2 id="修改开发板与虚拟机的ip地址为同一网段，相互ping-ip地址"><a href="#修改开发板与虚拟机的ip地址为同一网段，相互ping-ip地址" class="headerlink" title="修改开发板与虚拟机的ip地址为同一网段，相互ping ip地址"></a>修改开发板与虚拟机的ip地址为同一网段，相互ping ip地址</h2><p><code>**ifconfig**</code>为Linux系统查看ip地址的指令</p><p><code>**ifconfig+网卡名（eth0）+ip地址**</code>为修改系统ip地址的指令</p><p>将开发板与虚拟机的ip地址修改到同一网段，例如（192.168.137.10与192.168.137.20）</p><p><code>ping+ip地址</code>，检测当前机器能否与目标ip相连通</p><h2 id="成功ping通，但是返回-DUP-（没有出现该状况请忽略）"><a href="#成功ping通，但是返回-DUP-（没有出现该状况请忽略）" class="headerlink" title="成功ping通，但是返回(DUP!)     （没有出现该状况请忽略）"></a>成功ping通，但是返回(DUP!)     <em>（没有出现该状况请忽略）</em></h2><p><img src="/posts/76f723b3/clip_image002.jpg" alt="img"></p><p>重新打开服务控制平台（win+r 输入services.msc），找到Routing and Remote Access服务，将其关闭（<strong>本人原本这服务处于禁止运行状态，但我将其启动并再次关闭后互ping也变正常</strong>），重新互ping，不再返回错误信息。</p><p><img src="/posts/76f723b3/clip_image002-1678706909455-3.jpg" alt="img"></p><h1 id="其他错误"><a href="#其他错误" class="headerlink" title="其他错误"></a>其他错误</h1><h2 id="检测不到开发板的USB串口"><a href="#检测不到开发板的USB串口" class="headerlink" title="检测不到开发板的USB串口"></a>检测不到开发板的USB串口</h2><p>确保虚拟机的USB设置如下图所示</p><img src="image-20230313193040437.png" alt="image-20230313193040437" style="zoom:50%;" />]]></content>
+      
+      
+      <categories>
+          
+          <category> BUG大全 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> Ubuntu </tag>
+            
+            <tag> 嵌入式系统 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+  
+  
+</search>
