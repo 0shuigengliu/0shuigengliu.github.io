@@ -1,0 +1,14 @@
+# hexo robots.txt
+User-agent: *
+Allow: /
+Allow: /posts/
+
+Disallow: /categories/
+Disallow: /tags/
+Disallow: /comments/
+Disallow: /link/
+Disallow: /archives/
+Disallow: /charts/
+Disallow: /personal/
+
+Sitemap: https://www.shui2000.top/sitemap.txt
