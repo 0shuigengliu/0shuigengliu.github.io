@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 8.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.shui2000.top","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="转载文章">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【转载】正则表达式不会用？记不住？10分钟动手全部搞懂">
+<meta property="og:url" content="https://www.shui2000.top/442cf661.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="转载文章">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.shui2000.top/442cf661/1.webp">
+<meta property="og:image" content="https://www.shui2000.top/442cf661/2.webp">
+<meta property="og:image" content="https://www.shui2000.top/442cf661/3.webp">
+<meta property="og:image" content="https://www.shui2000.top/442cf661/4.webp">
+<meta property="og:image" content="https://www.shui2000.top/442cf661/4-2.webp">
+<meta property="og:image" content="https://www.shui2000.top/442cf661/4-3.webp">
+<meta property="og:image" content="https://www.shui2000.top/442cf661/5.webp">
+<meta property="og:image" content="https://www.shui2000.top/442cf661/6.webp">
+<meta property="og:image" content="https://www.shui2000.top/442cf661/7.webp">
+<meta property="og:image" content="https://www.shui2000.top/442cf661/8.webp">
+<meta property="og:image" content="https://www.shui2000.top/442cf661/67037041c966be1dbb01d981177c4189_MD5.webp">
+<meta property="og:image" content="https://www.shui2000.top/442cf661/18fbc146d3ea9d9c83c353d7673a6a75_MD5.webp">
+<meta property="og:image" content="https://www.shui2000.top/442cf661/c99b72aa59d119a247f2fa599dd63a11_MD5.webp">
+<meta property="og:image" content="https://www.shui2000.top/442cf661/eb4788cfcbfcf5d2c86088da26821644_MD5.webp">
+<meta property="og:image" content="https://www.shui2000.top/442cf661/c1b3f81d439ee8ca5385e1157c3dd8c8_MD5.webp">
+<meta property="og:image" content="https://www.shui2000.top/442cf661/4d80c2dc28c5319aa1047ce160522c3a_MD5.webp">
+<meta property="og:image" content="https://www.shui2000.top/442cf661/9a8cd050497e1c4b13b17f4514027812_MD5.webp">
+<meta property="og:image" content="https://www.shui2000.top/442cf661/b69ebfe7a2a1b48d49f5dec04c404dd0_MD5.webp">
+<meta property="og:image" content="https://www.shui2000.top/442cf661/3b387a54c519a5033a72d6fa97fdb9fc_MD5.webp">
+<meta property="og:image" content="https://www.shui2000.top/442cf661/f8bca230e5bfd4bbf300c72200f481b6_MD5.webp">
+<meta property="og:image" content="https://www.shui2000.top/442cf661/e2e9e9b4783387752ec53d83c06df0b1_MD5.webp">
+<meta property="og:image" content="https://www.shui2000.top/7bf4f6a7a8c4ea466194d6253da3af9a_MD5.webp">
+<meta property="og:image" content="https://www.shui2000.top/1d667cb09bd0abfcdb5f791319cd6fa4_MD5.webp">
+<meta property="og:image" content="https://www.shui2000.top/dc5f58d062f097c6d06a22f3c42f3990_MD5.webp">
+<meta property="article:published_time" content="2025-04-29T05:10:09.000Z">
+<meta property="article:modified_time" content="2026-07-08T16:55:35.106Z">
+<meta property="article:author" content="水更流">
+<meta property="article:tag" content="正则表达式">
+<meta property="article:tag" content="转载">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.shui2000.top/442cf661/1.webp">
+
+<link rel="canonical" href="https://www.shui2000.top/442cf661.html">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【转载】正则表达式不会用？记不住？10分钟动手全部搞懂 | Hexo</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Hexo</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.shui2000.top/442cf661.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="水更流">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hexo">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【转载】正则表达式不会用？记不住？10分钟动手全部搞懂
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2025-04-29 13:10:09" itemprop="dateCreated datePublished" datetime="2025-04-29T13:10:09+08:00">2025-04-29</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2026-07-09 00:55:35" itemprop="dateModified" datetime="2026-07-09T00:55:35+08:00">2026-07-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%AC%94%E8%AE%B0%E8%BD%AC%E8%BD%BD/" itemprop="url" rel="index"><span itemprop="name">笔记转载</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">转载文章</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="文章出处"><a href="#文章出处" class="headerlink" title="文章出处"></a>文章出处</h2><p><a target="_blank" rel="noopener" href="https://juejin.cn/user/3377313752032909/posts">是贝贝贝贝贝波a</a></p>
+<h2 id="正文开始"><a href="#正文开始" class="headerlink" title="正文开始"></a>正文开始</h2><p>正则表达式对于我们来说既熟悉又陌生，我们在很多时候都遇到过，但是学起来又很难记，不好理解；在没有接触正则表达式的时候，我就在想这一串奇怪的字符为啥可以代替其他很长的一段代码就可以得到预期值，去网上找资料和技术文章学习的时候，发现有很多知识点晦涩难懂；下面我将用非常通俗易懂的方法和大家一起学习正则表达式。</p>
+<blockquote>
+<p>正则表达式(regular expression)描述了一种字符串匹配的模式（pattern），可以用来检查一个串是否含有某种子串、将匹配的子串替换或者从某个串中取出符合某个条件的子串等。</p>
+</blockquote>
+<p>首先我们要在网页编译器 <a href="https://link.juejin.cn/?target=https://regex101.com/r/tG82ya/1/"><strong>regular expression 101</strong></a> 在线编译里自己动手跟着操作一遍就会发现其实没有那么难理解。（一定要实际动手操作加深记忆）</p>
+<h2 id="一、基础字符"><a href="#一、基础字符" class="headerlink" title="一、基础字符"></a>一、基础字符</h2><p>接下来一起操作一遍：(默认选中颜色表示符合条件)</p>
+<h3 id="1-号表示前边的字符必须至少出现一次（1次或多次）；"><a href="#1-号表示前边的字符必须至少出现一次（1次或多次）；" class="headerlink" title="1. +号表示前边的字符必须至少出现一次（1次或多次）；"></a>1.<code> +</code>号表示前边的字符必须至少出现一次（1次或多次）；</h3><img src="/442cf661/1.webp" class="">
+
+
+<h3 id="2-表示前边的字符可以不出现，或者出现一次或者多次（0次、或1次、或多次）"><a href="#2-表示前边的字符可以不出现，或者出现一次或者多次（0次、或1次、或多次）" class="headerlink" title="2.* 表示前边的字符可以不出现，或者出现一次或者多次（0次、或1次、或多次）"></a>2.<code>*</code> 表示前边的字符可以不出现，或者出现一次或者多次（0次、或1次、或多次）</h3><img src="/442cf661/2.webp" class="">
+
+<h3 id="3-号表示前面的字符最多只可以出现一次（0次或1次）"><a href="#3-号表示前面的字符最多只可以出现一次（0次或1次）" class="headerlink" title="3.?号表示前面的字符最多只可以出现一次（0次或1次）"></a>3.<code>?</code>号表示前面的字符最多只可以出现一次（0次或1次）</h3><img src="/442cf661/3.webp" class="">
+
+
+<h3 id="4-号："><a href="#4-号：" class="headerlink" title="4.{}号："></a>4.<code>&#123;&#125;</code>号：</h3><p>还是上边的例子</p>
+<p>比如希望<code>&#123;&#125;</code>前面的字符出现的次数是4次，就用<code>&#123;4&#125;</code>表示</p>
+<img src="/442cf661/4.webp" class="">
+
+<p><code>&#123;&#125;</code> 还可以允许我们输入一个范围；比如<code>&#123;2,4&#125;</code>表示前一个字符出现2到4次；</p>
+<img src="/442cf661/4-2.webp" class="">
+
+
+<p>如果想表示出现2次以上；就用<code>&#123;2，&#125;</code>表示；</p>
+<img src="/442cf661/4-3.webp" class="">
+
+
+<h3 id="5-如果想查找多个字符就"><a href="#5-如果想查找多个字符就" class="headerlink" title="5.如果想查找多个字符就()+"></a>5.如果想查找多个字符就<code>()+</code></h3><img src="/442cf661/5.webp" class="">
+
+<h3 id="6-“或”-通配符-如果想找-a-dog和a-cat就在（）里加“-”；这里前面会先区匹配“a”"><a href="#6-“或”-通配符-如果想找-a-dog和a-cat就在（）里加“-”；这里前面会先区匹配“a”" class="headerlink" title="6.“或” 通配符 如果想找 a dog和a cat就在（）里加“|”；这里前面会先区匹配“a”"></a>6.<code>“或”</code> 通配符 如果想找 a dog和a cat就在<code>（）</code>里加<code>“|”</code>；这里前面会先区匹配<code>“a”</code></h3><img src="/442cf661/6.webp" class="">
+
+
+<h3 id="7-字符类-可以匹配中括号里的字符，匹配到的字符只能取自于它们"><a href="#7-字符类-可以匹配中括号里的字符，匹配到的字符只能取自于它们" class="headerlink" title="7.字符类[]+可以匹配中括号里的字符，匹配到的字符只能取自于它们"></a>7.字符类<code>[]+</code>可以匹配中括号里的字符，匹配到的字符只能取自于它们</h3><img src="/442cf661/7.webp" class="">
+
+
+<p>另外 <code>[]+ </code>可以匹配字符的范围</p>
+<p><code>[a-z]+ </code>表示匹配所有的小写英文字母；<code>[A-Z]+</code> 表示匹配所有的大写英文字母;</p>
+<p><code>[a-zA-Z]+</code> 表示匹配所有的英文字符；<code>[a-zA-Z0-9]+</code> 表示所有的英文字符和数字</p>
+<h3 id="8-如果在-前边加-，就表示匹配除了尖号后边列出的【以外】的字符（包括换行符）"><a href="#8-如果在-前边加-，就表示匹配除了尖号后边列出的【以外】的字符（包括换行符）" class="headerlink" title="8.如果在 []+ 前边加 ^ ，就表示匹配除了尖号后边列出的【以外】的字符（包括换行符）"></a>8.如果在 <code>[]+</code> 前边加 <code>^</code> ，就表示匹配除了尖号后边列出的【<strong>以外</strong>】的字符（包括换行符）</h3><img src="/442cf661/8.webp" class="">
+
+
+<h2 id="二、一系列常用的字符；"><a href="#二、一系列常用的字符；" class="headerlink" title="二、一系列常用的字符；"></a>二、一系列常用的字符；</h2><h3 id="1、一些元字符（Meta-characters）"><a href="#1、一些元字符（Meta-characters）" class="headerlink" title="1、一些元字符（Meta-characters）"></a>1、一些元字符（Meta-characters）</h3><p>比如数字、空白符、单词开头、结尾等等它们被称为元字符；</p>
+<p><strong>\d \w \s \D \W \S … 正则表达式的大多数元字符都以反斜杠开头；</strong></p>
+<p>1）<code>\d </code>是数字字符，等同于之前写的<code> [0-9]+</code>;</p>
+<img src="/442cf661/67037041c966be1dbb01d981177c4189_MD5.webp" class="" title="11.png">
+
+<p>2）<code>\w </code>代表单词字符（英文、数字及下划线）</p>
+<img src="/442cf661/18fbc146d3ea9d9c83c353d7673a6a75_MD5.webp" class="" title="12.png">
+
+<p>3）<code>\s</code> 代表空白符 （包含Tab和换行符）</p>
+<img src="/442cf661/c99b72aa59d119a247f2fa599dd63a11_MD5.webp" class="" title="13.png">
+
+<p>4）与 <code>\d </code>相对应的<code> \D</code> 代表非数字字符</p>
+<img src="/442cf661/eb4788cfcbfcf5d2c86088da26821644_MD5.webp" class="" title="14.png">
+
+<p>5） 与 <code>\w</code> 相对应的 <code>\W </code>代表非单词字符</p>
+<img src="/442cf661/c1b3f81d439ee8ca5385e1157c3dd8c8_MD5.webp" class="" title="15.png">
+
+<p>6） 与 <code>\s</code> 相对应的<code> \S</code> 代表非空白字符</p>
+<img src="/442cf661/4d80c2dc28c5319aa1047ce160522c3a_MD5.webp" class="" title="16.png">
+
+<p><strong>2. 其中<code> .</code> 在正则表达式中也是一个特殊字符；它代表任意字符，但不包含换行字符。</strong></p>
+<img src="/442cf661/9a8cd050497e1c4b13b17f4514027812_MD5.webp" class="" title="17.png">
+
+<p><strong>3.两个特殊字符 <code>^</code> 匹配行首、<code>$</code> 匹配行尾；</strong></p>
+<img src="/442cf661/b69ebfe7a2a1b48d49f5dec04c404dd0_MD5.webp" class="" title="18.png">
+
+<img src="/442cf661/3b387a54c519a5033a72d6fa97fdb9fc_MD5.webp" class="" title="19.png">
+
+<h2 id="三、一些高级概念"><a href="#三、一些高级概念" class="headerlink" title="三、一些高级概念"></a>三、一些高级概念</h2><h3 id="1、贪婪与懒惰匹配"><a href="#1、贪婪与懒惰匹配" class="headerlink" title="1、贪婪与懒惰匹配"></a>1、贪婪与懒惰匹配</h3><p>之前学到 <code>* + &#123;&#125; </code>在匹配字符串的时候默认会去匹配尽可能多的字符</p>
+<p>比如我们需要匹配下边的html标签；我们 最开始想到的肯定是 <code>&lt;.+&gt;</code>来匹配；</p>
+<img src="/442cf661/f8bca230e5bfd4bbf300c72200f481b6_MD5.webp" class="" title="20.png">
+
+<p>但是这么会把全部字符和标签选中，因为 <code>.</code> 表示任意字符，<code>+</code> 号又表示前一项可以出现多次；不是我们想要的标签匹配，那么我们该怎么办呢？其实只需要在<code>+</code>号右边加一个 <code>？</code>就好了。</p>
+<p>它会将正则表达式中默认的贪婪匹配（Greedy Math）切换为懒惰匹配（Lazy Match）</p>
+<p>我们来试一下：</p>
+<img src="/442cf661/e2e9e9b4783387752ec53d83c06df0b1_MD5.webp" class="" title="21.png">
+
+<h3 id="2、两个实例加深理解"><a href="#2、两个实例加深理解" class="headerlink" title="2、两个实例加深理解"></a>2、两个实例加深理解</h3><h4 id="1-颜色值的匹配：RGBS值"><a href="#1-颜色值的匹配：RGBS值" class="headerlink" title="1.颜色值的匹配：RGBS值"></a>1.颜色值的匹配：RGBS值</h4><p>因为RGM码是由<code>#</code>和<code>6位十六进制字符</code>组成；</p>
+<p>首先要匹配，颜色匹配符前边的<code>#</code>号；因为RGM是十六进制的，所以只能取自<code>a-f</code>和<code>A-F</code>和<code>0-9</code>之间； 并且长度一定是6位，最后<code>\b</code>作为边界值，避免不是RGM颜色的代码被识别。 一起在编译器里看一下：</p>
+<p><img src="/7bf4f6a7a8c4ea466194d6253da3af9a_MD5.webp" alt="22.png"></p>
+<p>可以得到预期匹配值。</p>
+<h4 id="2-ipv4-地址匹配"><a href="#2-ipv4-地址匹配" class="headerlink" title="2.ipv4 地址匹配"></a>2.ipv4 地址匹配</h4><p>其实Ipv4地址是由四段代码实现的，数字之间由句号隔开；如果要在文本中提取所有出现的ip地址</p>
+<p>可以直接使用<code>\d+\.d+\.d+\.d+</code>来进行匹配；</p>
+<p><strong>思路1）首先<code>\d+ </code>会匹配所有的数字；</strong></p>
+<p><img src="/1d667cb09bd0abfcdb5f791319cd6fa4_MD5.webp" alt="23.png"></p>
+<p>这里可以看到成功的匹配到了ipv4地址；</p>
+<p>但是还存在一个问题；ip地址都是八位的，也就是它的范围介于<code>0-255</code>之间</p>
+<p>但是256很明显超出了范围，但是还是被匹配了。</p>
+<p><strong>2)这时候就需要换一种思路：</strong></p>
+<p>首先匹配25，然后第二位取[0-5]之间的数字 : <code>25[0-5]</code>;</p>
+<p>其次如果它的第一个字母是2，第二个字母是[0-4]之间的，最后一位可以取0-9之间的任意值用<code> \d</code>表示 : <code>2[0-4]\d</code>;</p>
+<p>如果第一位是[01],那么最后两位可以取00-99之间的任意数字这里用\d\d表示:<code>[01]\d\d</code></p>
+<p>这三种情况中间用 <code>|</code> 号连接；</p>
+<p>但是有时候，IP地址每一段也可以是两位数字甚至一位数字，这时候就可以直接在后两位数字后边加 <code>？</code>来表示。这时候数字部分就匹配完成：<code>25[0-5]|2[0-4]\d|[01]?\d\d?</code></p>
+<p>我们需要匹配三次<code> ((25[0-5]|2[0-4]\d|[01]?\d\d?)\.)&#123;3&#125;</code>;把前三段数字和后边的句点匹配完毕；</p>
+<p>然后后边的代码还需要重复前边三段的代码 ;最后需要在收尾都加入 <code>\ b</code> 来匹配字符的边界；</p>
+<p>然后看一下完整代码:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">\b((25[0-5]|2[0-4]\d|[01]?\d\d?)\.)&#123;3&#125;(25[0-5]|2[0-4]\d|[01]?\d\d?)\b</span><br></pre></td></tr></table></figure>
+
+<p><img src="/dc5f58d062f097c6d06a22f3c42f3990_MD5.webp" alt="25.png"></p>
+<p>这里看出我们已经可以匹配到预期的完整字符。</p>
+<h2 id="四、正则表达式常用语法"><a href="#四、正则表达式常用语法" class="headerlink" title="四、正则表达式常用语法"></a>四、正则表达式常用语法</h2><h3 id="1-Flags（标志符或修饰符）"><a href="#1-Flags（标志符或修饰符）" class="headerlink" title="1.Flags（标志符或修饰符）"></a><strong>1.Flags（标志符或修饰符）</strong></h3><p><code>g</code>：全局匹配（global）；正则表达式默认只会返回第一个匹配结果，使用标志符g则可以返回所有匹配</p>
+<p><code>i</code>：忽略大小写（case-insensitive）；在匹配时忽略英文字母的大小写</p>
+<p><code>m</code>：多行匹配（multiline）；将开始和结束字符（^和$）视为在多行上工作，即分别匹配每一行（由 \n 或 \r 分割）的开始和结束，而不只是只匹配整个输入字符串的最开始和最末尾处</p>
+<h3 id="2-Character-Sets（字符集合）"><a href="#2-Character-Sets（字符集合）" class="headerlink" title="2. Character Sets（字符集合）"></a>2. <strong>Character Sets（字符集合）</strong></h3><p>用于匹配字符集合中的任意一个字符，常见的字符集有：</p>
+<p><code>[xyz]</code>：匹配 “x”或”y”&#96;&#96;”z”</p>
+<p><code>[^xyz]</code>：补集，匹配除 “x” “y” “z”的其他字符</p>
+<p><code>[a-z]</code>：匹配从 “a” 到 “z” 的任意字符</p>
+<p><code>[^a-n]</code>：补集，匹配除 “a” 到 “n” 的其他字符</p>
+<p><code>[A-Z]</code>：匹配从 “A” 到 “Z” 的任意字符</p>
+<p><code>[0-9]</code>：匹配从 “0” 到 “9” 的任意数字</p>
+<p>比如匹配所有的字母和数字可以写成：<code>/[a-zA-Z0-9]/</code> 或者 <code>/[a-z0-9]/i</code>。</p>
+<h3 id="3-Quantifiers-量词"><a href="#3-Quantifiers-量词" class="headerlink" title="3. Quantifiers (量词)"></a>3. <strong>Quantifiers (量词)</strong></h3><p>在实际使用中常需要匹配同一类型的字符多次，比如匹配 11 位的手机号，我们不可能将 [0-9] 写 11 遍，此时可以使用 Quantifiers 来实现重复匹配。</p>
+<p><code>&#123;n&#125;</code>：匹配 n 次</p>
+<p><code>&#123;n,m&#125;</code>：匹配 n-m 次</p>
+<p><code>&#123;n,&#125;</code>：匹配 &gt;&#x3D;n 次</p>
+<p><code>?</code>：匹配 0 || 1 次</p>
+<p><code>*</code>：匹配 &gt;&#x3D;0 次，等价于 {0,}</p>
+<p><code>+</code>：匹配 &gt;&#x3D;1 次，等价于 {1,}</p>
+<h3 id="4-Metacharacters（元字符）"><a href="#4-Metacharacters（元字符）" class="headerlink" title="4. Metacharacters（元字符）"></a>4. <strong>Metacharacters（元字符）</strong></h3><p>常见的元字符有：</p>
+<p><code>\d</code>：匹配任意数字，等价于 [0-9]</p>
+<p><code>\D</code>：匹配任意非数字字符；\d 的补集</p>
+<p><code>\w</code>：匹配任意基本拉丁字母表中的字母和数字，以及下划线；等价于 [A-Za-z0-9_]</p>
+<p><code>\W</code>：匹配任意非基本拉丁字母表中的字母和数字，以及下划线；\w 的补集</p>
+<p><code>\s</code>：匹配一个空白符，包括空格、制表符、换页符、换行符和其他 Unicode 空格</p>
+<p><code>\S</code>：匹配一个非空白符；\s的补集</p>
+<p><code>\b</code>：匹配一个零宽单词边界，如一个字母与一个空格之间；例如，&#x2F;\bno&#x2F; 匹配 “at noon” 中的 “no”，&#x2F;ly\b&#x2F; 匹配 “possibly yesterday.” 中的 “ly”</p>
+<p><code>\B</code>：匹配一个零宽非单词边界，如两个字母之间或两个空格之间；例如，&#x2F;\Bon&#x2F; 匹配 “at noon” 中的 “on”，&#x2F;ye\B&#x2F; 匹配 “possibly yesterday.”中的 “ye”</p>
+<p><code>\t</code>：匹配一个水平制表符（tab)</p>
+<p><code>\n</code>：匹配一个换行符（newline)</p>
+<p><code>\r</code>：匹配一个回车符（carriage return)</p>
+<h3 id="5-贪婪-懒惰匹配（Greedy-Lazy-Match）"><a href="#5-贪婪-懒惰匹配（Greedy-Lazy-Match）" class="headerlink" title="5.贪婪&#x2F;懒惰匹配（Greedy&#x2F;Lazy Match）"></a>5.贪婪&#x2F;懒惰匹配（Greedy&#x2F;Lazy Match）</h3><p><code>&lt;.+&gt;</code>: 默认贪婪匹配“任意字符”； <code>&lt;.+?&gt;</code>: 懒惰匹配“任意字符”；</p>
+<p>总结：其实正则表达式还有许多高级概念，如果大家想深入学习： 我推荐大家可以看一下这个视频和文章：(目前也在学习)</p>
+<p><a href="https://link.juejin.cn/?target=https://www.bilibili.com/video/BV19t4y1y7qP?from=search&seid=12985365724945943801&spm_id_from=333.337.0.0">正则表达式30分钟入门教程</a></p>
+<p><a target="_blank" rel="noopener" href="https://juejin.cn/post/6844903487155732494">还有《js正则迷你书》作者的原著文章</a></p>
+<p>好啦其实就是分享一些很基础的东西，技术有限。欢迎大家一起讨论学习。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F/" rel="tag"># 正则表达式</a>
+              <a href="/tags/%E8%BD%AC%E8%BD%BD/" rel="tag"># 转载</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/14f84af5.html" rel="prev" title="一文讲明白优先级队列为啥按less排序却是从大到小（转载）">
+      <i class="fa fa-chevron-left"></i> 一文讲明白优先级队列为啥按less排序却是从大到小（转载）
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%87%E7%AB%A0%E5%87%BA%E5%A4%84"><span class="nav-number">1.</span> <span class="nav-text">文章出处</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%AD%A3%E6%96%87%E5%BC%80%E5%A7%8B"><span class="nav-number">2.</span> <span class="nav-text">正文开始</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E5%9F%BA%E7%A1%80%E5%AD%97%E7%AC%A6"><span class="nav-number">3.</span> <span class="nav-text">一、基础字符</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%8F%B7%E8%A1%A8%E7%A4%BA%E5%89%8D%E8%BE%B9%E7%9A%84%E5%AD%97%E7%AC%A6%E5%BF%85%E9%A1%BB%E8%87%B3%E5%B0%91%E5%87%BA%E7%8E%B0%E4%B8%80%E6%AC%A1%EF%BC%881%E6%AC%A1%E6%88%96%E5%A4%9A%E6%AC%A1%EF%BC%89%EF%BC%9B"><span class="nav-number">3.1.</span> <span class="nav-text">1. +号表示前边的字符必须至少出现一次（1次或多次）；</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E8%A1%A8%E7%A4%BA%E5%89%8D%E8%BE%B9%E7%9A%84%E5%AD%97%E7%AC%A6%E5%8F%AF%E4%BB%A5%E4%B8%8D%E5%87%BA%E7%8E%B0%EF%BC%8C%E6%88%96%E8%80%85%E5%87%BA%E7%8E%B0%E4%B8%80%E6%AC%A1%E6%88%96%E8%80%85%E5%A4%9A%E6%AC%A1%EF%BC%880%E6%AC%A1%E3%80%81%E6%88%961%E6%AC%A1%E3%80%81%E6%88%96%E5%A4%9A%E6%AC%A1%EF%BC%89"><span class="nav-number">3.2.</span> <span class="nav-text">2.* 表示前边的字符可以不出现，或者出现一次或者多次（0次、或1次、或多次）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E5%8F%B7%E8%A1%A8%E7%A4%BA%E5%89%8D%E9%9D%A2%E7%9A%84%E5%AD%97%E7%AC%A6%E6%9C%80%E5%A4%9A%E5%8F%AA%E5%8F%AF%E4%BB%A5%E5%87%BA%E7%8E%B0%E4%B8%80%E6%AC%A1%EF%BC%880%E6%AC%A1%E6%88%961%E6%AC%A1%EF%BC%89"><span class="nav-number">3.3.</span> <span class="nav-text">3.?号表示前面的字符最多只可以出现一次（0次或1次）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-%E5%8F%B7%EF%BC%9A"><span class="nav-number">3.4.</span> <span class="nav-text">4.{}号：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-%E5%A6%82%E6%9E%9C%E6%83%B3%E6%9F%A5%E6%89%BE%E5%A4%9A%E4%B8%AA%E5%AD%97%E7%AC%A6%E5%B0%B1"><span class="nav-number">3.5.</span> <span class="nav-text">5.如果想查找多个字符就()+</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-%E2%80%9C%E6%88%96%E2%80%9D-%E9%80%9A%E9%85%8D%E7%AC%A6-%E5%A6%82%E6%9E%9C%E6%83%B3%E6%89%BE-a-dog%E5%92%8Ca-cat%E5%B0%B1%E5%9C%A8%EF%BC%88%EF%BC%89%E9%87%8C%E5%8A%A0%E2%80%9C-%E2%80%9D%EF%BC%9B%E8%BF%99%E9%87%8C%E5%89%8D%E9%9D%A2%E4%BC%9A%E5%85%88%E5%8C%BA%E5%8C%B9%E9%85%8D%E2%80%9Ca%E2%80%9D"><span class="nav-number">3.6.</span> <span class="nav-text">6.“或” 通配符 如果想找 a dog和a cat就在（）里加“|”；这里前面会先区匹配“a”</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-%E5%AD%97%E7%AC%A6%E7%B1%BB-%E5%8F%AF%E4%BB%A5%E5%8C%B9%E9%85%8D%E4%B8%AD%E6%8B%AC%E5%8F%B7%E9%87%8C%E7%9A%84%E5%AD%97%E7%AC%A6%EF%BC%8C%E5%8C%B9%E9%85%8D%E5%88%B0%E7%9A%84%E5%AD%97%E7%AC%A6%E5%8F%AA%E8%83%BD%E5%8F%96%E8%87%AA%E4%BA%8E%E5%AE%83%E4%BB%AC"><span class="nav-number">3.7.</span> <span class="nav-text">7.字符类[]+可以匹配中括号里的字符，匹配到的字符只能取自于它们</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#8-%E5%A6%82%E6%9E%9C%E5%9C%A8-%E5%89%8D%E8%BE%B9%E5%8A%A0-%EF%BC%8C%E5%B0%B1%E8%A1%A8%E7%A4%BA%E5%8C%B9%E9%85%8D%E9%99%A4%E4%BA%86%E5%B0%96%E5%8F%B7%E5%90%8E%E8%BE%B9%E5%88%97%E5%87%BA%E7%9A%84%E3%80%90%E4%BB%A5%E5%A4%96%E3%80%91%E7%9A%84%E5%AD%97%E7%AC%A6%EF%BC%88%E5%8C%85%E6%8B%AC%E6%8D%A2%E8%A1%8C%E7%AC%A6%EF%BC%89"><span class="nav-number">3.8.</span> <span class="nav-text">8.如果在 []+ 前边加 ^ ，就表示匹配除了尖号后边列出的【以外】的字符（包括换行符）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E4%B8%80%E7%B3%BB%E5%88%97%E5%B8%B8%E7%94%A8%E7%9A%84%E5%AD%97%E7%AC%A6%EF%BC%9B"><span class="nav-number">4.</span> <span class="nav-text">二、一系列常用的字符；</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81%E4%B8%80%E4%BA%9B%E5%85%83%E5%AD%97%E7%AC%A6%EF%BC%88Meta-characters%EF%BC%89"><span class="nav-number">4.1.</span> <span class="nav-text">1、一些元字符（Meta-characters）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E4%B8%80%E4%BA%9B%E9%AB%98%E7%BA%A7%E6%A6%82%E5%BF%B5"><span class="nav-number">5.</span> <span class="nav-text">三、一些高级概念</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81%E8%B4%AA%E5%A9%AA%E4%B8%8E%E6%87%92%E6%83%B0%E5%8C%B9%E9%85%8D"><span class="nav-number">5.1.</span> <span class="nav-text">1、贪婪与懒惰匹配</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%E3%80%81%E4%B8%A4%E4%B8%AA%E5%AE%9E%E4%BE%8B%E5%8A%A0%E6%B7%B1%E7%90%86%E8%A7%A3"><span class="nav-number">5.2.</span> <span class="nav-text">2、两个实例加深理解</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E9%A2%9C%E8%89%B2%E5%80%BC%E7%9A%84%E5%8C%B9%E9%85%8D%EF%BC%9ARGBS%E5%80%BC"><span class="nav-number">5.2.1.</span> <span class="nav-text">1.颜色值的匹配：RGBS值</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-ipv4-%E5%9C%B0%E5%9D%80%E5%8C%B9%E9%85%8D"><span class="nav-number">5.2.2.</span> <span class="nav-text">2.ipv4 地址匹配</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F%E5%B8%B8%E7%94%A8%E8%AF%AD%E6%B3%95"><span class="nav-number">6.</span> <span class="nav-text">四、正则表达式常用语法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-Flags%EF%BC%88%E6%A0%87%E5%BF%97%E7%AC%A6%E6%88%96%E4%BF%AE%E9%A5%B0%E7%AC%A6%EF%BC%89"><span class="nav-number">6.1.</span> <span class="nav-text">1.Flags（标志符或修饰符）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-Character-Sets%EF%BC%88%E5%AD%97%E7%AC%A6%E9%9B%86%E5%90%88%EF%BC%89"><span class="nav-number">6.2.</span> <span class="nav-text">2. Character Sets（字符集合）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-Quantifiers-%E9%87%8F%E8%AF%8D"><span class="nav-number">6.3.</span> <span class="nav-text">3. Quantifiers (量词)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-Metacharacters%EF%BC%88%E5%85%83%E5%AD%97%E7%AC%A6%EF%BC%89"><span class="nav-number">6.4.</span> <span class="nav-text">4. Metacharacters（元字符）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-%E8%B4%AA%E5%A9%AA-%E6%87%92%E6%83%B0%E5%8C%B9%E9%85%8D%EF%BC%88Greedy-Lazy-Match%EF%BC%89"><span class="nav-number">6.5.</span> <span class="nav-text">5.贪婪&#x2F;懒惰匹配（Greedy&#x2F;Lazy Match）</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">水更流</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">21</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">36</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/0shuigengliu" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;0shuigengliu" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://space.bilibili.com/289595050" title="bilibili → https:&#x2F;&#x2F;space.bilibili.com&#x2F;289595050" rel="noopener" target="_blank"><i class="fa fa-fw fa-bilibili"></i>bilibili</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">水更流</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+<div class="powered-by">
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <i class="fa fa-user-md"></i>
+    <span id="busuanzi_container_site_uv">
+        本站访客数:<span id="busuanzi_value_site_uv"></span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span id="busuanzi_container_site_pv">
+        本站访问量<span id="busuanzi_value_site_pv"></span>
+    </span>
+</div>
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

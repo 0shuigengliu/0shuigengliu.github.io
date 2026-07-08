@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 8.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.shui2000.top","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="分析lab6实验中出现的bug">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MIT6.S081_2020_Lab6:init-starting-sh-bug-原因分析">
+<meta property="og:url" content="https://www.shui2000.top/a33744ac.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="分析lab6实验中出现的bug">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.shui2000.top/a33744ac/COW-BUG.gif">
+<meta property="og:image" content="https://www.shui2000.top/a33744ac/stacktest%E6%8A%A5%E9%94%99.png">
+<meta property="og:image" content="https://www.shui2000.top/a33744ac/stacktest%E6%88%90%E5%8A%9F.png">
+<meta property="og:image" content="https://www.shui2000.top/a33744ac/%E4%BF%AE%E6%94%B9fork%E5%87%BD%E6%95%B0%EF%BC%8C%E8%BE%93%E5%87%BA%E7%88%B6%E8%BF%9B%E7%A8%8B%E4%B8%8E%E5%AD%90%E8%BF%9B%E7%A8%8B%E7%9A%84pid%E5%8F%B7.png">
+<meta property="og:image" content="https://www.shui2000.top/a33744ac/%E4%BB%A3%E7%A0%81%E6%8A%A5%E9%94%99.png">
+<meta property="og:image" content="https://www.shui2000.top/a33744ac/%E4%BB%A3%E7%A0%81%E6%8A%A5%E9%94%992.png">
+<meta property="og:image" content="https://www.shui2000.top/a33744ac/%E4%BB%A3%E7%A0%81%E6%8A%A5%E9%94%993.png">
+<meta property="og:image" content="https://www.shui2000.top/a33744ac/%E4%BB%A3%E7%A0%81%E6%8A%A5%E9%94%994.png">
+<meta property="og:image" content="https://www.shui2000.top/a33744ac/%E6%AD%A3%E5%B8%B8%E8%BF%90%E8%A1%8C.png">
+<meta property="og:image" content="https://www.shui2000.top/a33744ac/%E6%94%BE%E5%BC%83.png">
+<meta property="article:published_time" content="2024-06-07T13:08:30.000Z">
+<meta property="article:modified_time" content="2026-07-08T16:55:35.116Z">
+<meta property="article:author" content="水更流">
+<meta property="article:tag" content="BUG">
+<meta property="article:tag" content="MIT6.S081">
+<meta property="article:tag" content="fork">
+<meta property="article:tag" content="内核">
+<meta property="article:tag" content="写时复制">
+<meta property="article:tag" content="操作系统">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.shui2000.top/a33744ac/COW-BUG.gif">
+
+<link rel="canonical" href="https://www.shui2000.top/a33744ac.html">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>MIT6.S081_2020_Lab6:init-starting-sh-bug-原因分析 | Hexo</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Hexo</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.shui2000.top/a33744ac.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="水更流">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hexo">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MIT6.S081_2020_Lab6:init-starting-sh-bug-原因分析
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2024-06-07 21:08:30" itemprop="dateCreated datePublished" datetime="2024-06-07T21:08:30+08:00">2024-06-07</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2026-07-09 00:55:35" itemprop="dateModified" datetime="2026-07-09T00:55:35+08:00">2026-07-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E9%A1%B9%E7%9B%AE/" itemprop="url" rel="index"><span itemprop="name">项目</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">分析lab6实验中出现的bug</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="一、BUG的表现"><a href="#一、BUG的表现" class="headerlink" title="一、BUG的表现"></a>一、BUG的表现</h2><p>在Lab 6 实验中，遇见了这个现象</p>
+<img src="/a33744ac/COW-BUG.gif" class="" title="COW-BUG">
+
+<p>只要按下回车，就会输出<code>init: starting sh</code>,这个BUG看起来很有意思。</p>
+<h2 id="二、结论"><a href="#二、结论" class="headerlink" title="二、结论"></a>二、结论</h2><p>先说结论:该BUG的产生原因：在之前<a href="https://www.shui2000.top/posts/4fd45b61.html">lab5 实验</a>时，<code>usertest</code>中存有一项测试<code>stacktest</code>报错：</p>
+<img src="/a33744ac/stacktest%E6%8A%A5%E9%94%99.png" class="" title="image-20240524205353066">
+
+<p><code>stacktest</code>源代码如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// user/usertests.c</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// check that there&#x27;s an invalid page beneath</span></span><br><span class="line"><span class="comment">// the user stack, to catch stack overflow.</span></span><br><span class="line"><span class="type">void</span></span><br><span class="line"><span class="title function_">stacktest</span><span class="params">(<span class="type">char</span> *s)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">int</span> pid;</span><br><span class="line">  <span class="type">int</span> xstatus;</span><br><span class="line">  </span><br><span class="line">  pid = fork();</span><br><span class="line">  <span class="keyword">if</span>(pid == <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="type">char</span> *sp = (<span class="type">char</span> *) r_sp();</span><br><span class="line">    sp -= PGSIZE;</span><br><span class="line">    <span class="comment">// the *sp should cause a trap.</span></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%s: stacktest: read below stack %p\n&quot;</span>, *sp);</span><br><span class="line">    <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span>(pid &lt; <span class="number">0</span>)&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%s: fork failed\n&quot;</span>, s);</span><br><span class="line">    <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  wait(&amp;xstatus);</span><br><span class="line">  <span class="keyword">if</span>(xstatus == <span class="number">-1</span>)  <span class="comment">// kernel killed child?</span></span><br><span class="line">    <span class="built_in">exit</span>(<span class="number">0</span>);</span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">    <span class="built_in">exit</span>(xstatus);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>stacktest</code>这段代码是一个用于检测堆栈溢出的函数。在函数中，首先使用fork()创建一个子进程，然后在子进程中获取当前栈指针，减去页面大小（PGSIZE），并尝试读取这个地址的内容来引发一个异常(<code>trap</code>)(<strong>为什么会发生异常可以参考</strong>：<a href = '#stacktest'>stacktest</a>)。如果发生异常，子进程会返回1给父进程*(代码第15行：<code>exit(1)</code>)*，父进程等待子进程的返回值(<code>wait(&amp;xstatus)</code>)，<strong>如果返回值为-1,<code>stacktest</code>测试通过，否则测试失败。</strong>，返回值是-1的奥秘可以从注释中*(<code>kernel killed child?</code>)*看出,<strong>内核的中断处理函数应该检测到子进程的越界访问行为，并将子进程<code>kill</code>掉。</strong></p>
+<p>所以在<a href="https://www.shui2000.top/posts/4fd45b61.html">lab5 实验</a>的<code>usertrap</code>函数中加入<span id = 'wrongcode'>一段代码</span>，检测发生<code>trap</code>的虚拟地址是否位于栈指针之下，如果是，将进程终止：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(PGROUNDUP(p-&gt;trapframe-&gt;sp) - <span class="number">1</span> &gt;= va )&#123;</span><br><span class="line">        p-&gt;killed=<span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>之后测试<code>stacktest</code>成功：</p>
+<img src="/a33744ac/stacktest%E6%88%90%E5%8A%9F.png" class="" title="image-20240524210529587">
+
+<p><strong>Lab6实验紧跟着Lab5实验，同样需要借助异常处理机制，同样需要利用页面错误(<code>page fault</code>)，<code>scause</code>的值都为13或15，并且都需要通过<code>usertest</code>检测，所以自作聪明在Lab6<code>usertrap</code>代码中加入了这段代码导致的BUG发生：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(PGROUNDUP(p-&gt;trapframe-&gt;sp) - <span class="number">1</span> &gt;= va )&#123;</span><br><span class="line">        p-&gt;killed=<span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>把这段代码去掉就可以了</strong></p>
+<h3 id="为什么去掉这段代码可以通过stacktest"><a href="#为什么去掉这段代码可以通过stacktest" class="headerlink" title="为什么去掉这段代码可以通过stacktest?"></a>为什么去掉这段代码可以通过<code>stacktest</code>?</h3><p>相比于<code>Lazy allocation</code>实验，<code>copy on write</code>实验对权限检测的要求更加严格，以下代码保证正常运行：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(oldpte==<span class="number">0</span>|| (*oldpte &amp; PTE_V)==<span class="number">0</span> ||(*oldpte &amp; PTE_U)==<span class="number">0</span>)&#123;</span><br><span class="line">      <span class="comment">//printf(&quot;pid=%d wrong access\n&quot;,p-&gt;pid );</span></span><br><span class="line">      p-&gt;killed=<span class="number">1</span>;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="三、探究BUG发生的过程"><a href="#三、探究BUG发生的过程" class="headerlink" title="三、探究BUG发生的过程"></a>三、探究BUG发生的过程</h2><h3 id="3-1有关函数提前梳理"><a href="#3-1有关函数提前梳理" class="headerlink" title="3.1有关函数提前梳理"></a>3.1有关函数提前梳理</h3><p><strong>由于每个人编写的Copy-On-Write的代码都不一样，本人的代码执行结果可能是独特的，并且最终的结果含有大量推测</strong></p>
+<p><strong>由于每个人编写的Copy-On-Write的代码都不一样，本人的代码执行结果可能是独特的，并且最终的结果含有大量推测</strong></p>
+<p><strong>由于每个人编写的Copy-On-Write的代码都不一样，本人的代码执行结果可能是独特的，并且最终的结果含有大量推测</strong></p>
+<p>由于本BUG发生时现象过于神奇，即使问题已经得到了解决，我仍然决定详细跟踪研究，来探究该BUG发生的详细流程。</p>
+<p>需要对Fork 函数，Exec函数，Wait函数，Exit函数的使用有所理解：</p>
+<h4 id="3-1-1-Fork函数"><a href="#3-1-1-Fork函数" class="headerlink" title="3.1.1 Fork函数"></a>3.1.1 Fork函数</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// kernel/proc.c</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Create a new process, copying the parent.</span></span><br><span class="line"><span class="comment">// Sets up child kernel stack to return as if from fork() system call.</span></span><br><span class="line"><span class="type">int</span></span><br><span class="line"><span class="title function_">fork</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">  </span><br><span class="line">  <span class="type">int</span> i, pid;</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">proc</span> *<span class="title">np</span>;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">proc</span> *<span class="title">p</span> =</span> myproc();</span><br><span class="line">  </span><br><span class="line">  <span class="comment">// Allocate process.</span></span><br><span class="line">  <span class="keyword">if</span>((np = allocproc()) == <span class="number">0</span>)&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Copy user memory from parent to child.</span></span><br><span class="line">  <span class="keyword">if</span>(uvmcopy(p-&gt;pagetable, np-&gt;pagetable, p-&gt;sz) &lt; <span class="number">0</span>)&#123;</span><br><span class="line">    freeproc(np);</span><br><span class="line">    release(&amp;np-&gt;lock);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  np-&gt;sz = p-&gt;sz;</span><br><span class="line"></span><br><span class="line">  np-&gt;parent = p;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// copy saved user registers.</span></span><br><span class="line">  *(np-&gt;trapframe) = *(p-&gt;trapframe);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Cause fork to return 0 in the child.</span></span><br><span class="line">  np-&gt;trapframe-&gt;a0 = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// increment reference counts on open file descriptors.</span></span><br><span class="line">  <span class="keyword">for</span>(i = <span class="number">0</span>; i &lt; NOFILE; i++)</span><br><span class="line">    <span class="keyword">if</span>(p-&gt;ofile[i])</span><br><span class="line">      np-&gt;ofile[i] = filedup(p-&gt;ofile[i]);</span><br><span class="line">  np-&gt;cwd = idup(p-&gt;cwd);</span><br><span class="line"></span><br><span class="line">  safestrcpy(np-&gt;name, p-&gt;name, <span class="keyword">sizeof</span>(p-&gt;name));</span><br><span class="line"></span><br><span class="line">  pid = np-&gt;pid;</span><br><span class="line"></span><br><span class="line">  np-&gt;state = RUNNABLE;</span><br><span class="line">  <span class="comment">//printf(&quot;pid=%d use fork create pid=%d\n&quot;,p-&gt;pid,np-&gt;pid);</span></span><br><span class="line">  release(&amp;np-&gt;lock);</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">return</span> pid;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>fork会<strong>拷贝</strong>当前进程的内存，并创建一个新的进程，这里的内存包含了进程的指令和数据。之后，我们就有了两个拥有完全一样内存的进程。**fork系统调用在两个进程中都会返回，在原始的进程中，fork系统调用会返回大于0的整数，这个是新创建进程的ID。而在新创建的进程中，fork系统调用会返回0。**所以即使两个进程的内存是完全一样的，我们还是可以通过fork的返回值区分旧进程和新进程。</p>
+<h5 id="举个例子："><a href="#举个例子：" class="headerlink" title="举个例子："></a>举个例子：</h5><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">proc</span> *<span class="title">p</span> =</span> myproc();</span><br><span class="line">    <span class="type">int</span> val=p-&gt;pid();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;origin pid=%d\n&quot;</span>,val);</span><br><span class="line">    val=fork();</span><br><span class="line">    <span class="keyword">if</span>(val&gt;<span class="number">0</span>)&#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;parent val=%d\n&quot;</span>,val);</span><br><span class="line">    &#125;<span class="keyword">else</span> <span class="keyword">if</span> (val==<span class="number">0</span>)&#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;child val=%d\n&quot;</span>,val);</span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;fork failed\n&quot;</span>);</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">exit</span> (<span class="number">0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>假设原本进程的PID为2，那么该程序运行结果为：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">origin pid= <span class="number">2</span></span><br><span class="line"><span class="comment">//因为多核的原因，后两行输出可能交替出现。</span></span><br><span class="line">parent val= <span class="number">3</span></span><br><span class="line">child val= <span class="number">0</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="3-1-2-Exec-函数"><a href="#3-1-2-Exec-函数" class="headerlink" title="3.1.2 Exec 函数"></a>3.1.2 Exec 函数</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// kernel/exec.c</span></span><br><span class="line"><span class="type">int</span>	<span class="title function_">exec</span><span class="params">(<span class="type">char</span> *path, <span class="type">char</span> **argv)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">char</span> *s, *last;</span><br><span class="line">  <span class="type">int</span> i, off;</span><br><span class="line">  uint64 argc, sz = <span class="number">0</span>, sp, ustack[MAXARG+<span class="number">1</span>], stackbase;</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">elfhdr</span> <span class="title">elf</span>;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">inode</span> *<span class="title">ip</span>;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">proghdr</span> <span class="title">ph</span>;</span></span><br><span class="line">  <span class="type">pagetable_t</span> pagetable = <span class="number">0</span>, oldpagetable;</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">proc</span> *<span class="title">p</span> =</span> myproc();</span><br><span class="line"></span><br><span class="line">  begin_op();</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span>((ip = namei(path)) == <span class="number">0</span>)&#123;</span><br><span class="line">    end_op();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  ilock(ip);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Check ELF header</span></span><br><span class="line">  <span class="keyword">if</span>(readi(ip, <span class="number">0</span>, (uint64)&amp;elf, <span class="number">0</span>, <span class="keyword">sizeof</span>(elf)) != <span class="keyword">sizeof</span>(elf))</span><br><span class="line">    <span class="keyword">goto</span> bad;</span><br><span class="line">  <span class="keyword">if</span>(elf.magic != ELF_MAGIC)</span><br><span class="line">    <span class="keyword">goto</span> bad;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span>((pagetable = proc_pagetable(p)) == <span class="number">0</span>)</span><br><span class="line">    <span class="keyword">goto</span> bad;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Load program into memory.</span></span><br><span class="line">  <span class="keyword">for</span>(i=<span class="number">0</span>, off=elf.phoff; i&lt;elf.phnum; i++, off+=<span class="keyword">sizeof</span>(ph))&#123;</span><br><span class="line">    <span class="keyword">if</span>(readi(ip, <span class="number">0</span>, (uint64)&amp;ph, off, <span class="keyword">sizeof</span>(ph)) != <span class="keyword">sizeof</span>(ph))</span><br><span class="line">      <span class="keyword">goto</span> bad;</span><br><span class="line">    <span class="keyword">if</span>(ph.type != ELF_PROG_LOAD)</span><br><span class="line">      <span class="keyword">continue</span>;</span><br><span class="line">    <span class="keyword">if</span>(ph.memsz &lt; ph.filesz)</span><br><span class="line">      <span class="keyword">goto</span> bad;</span><br><span class="line">    <span class="keyword">if</span>(ph.vaddr + ph.memsz &lt; ph.vaddr)</span><br><span class="line">      <span class="keyword">goto</span> bad;</span><br><span class="line">    uint64 sz1;</span><br><span class="line">    <span class="keyword">if</span>((sz1 = uvmalloc(pagetable, sz, ph.vaddr + ph.memsz)) == <span class="number">0</span>)</span><br><span class="line">      <span class="keyword">goto</span> bad;</span><br><span class="line">    sz = sz1;</span><br><span class="line">    <span class="keyword">if</span>(ph.vaddr % PGSIZE != <span class="number">0</span>)</span><br><span class="line">      <span class="keyword">goto</span> bad;</span><br><span class="line">    <span class="keyword">if</span>(loadseg(pagetable, ph.vaddr, ip, ph.off, ph.filesz) &lt; <span class="number">0</span>)</span><br><span class="line">      <span class="keyword">goto</span> bad;</span><br><span class="line">  &#125;</span><br><span class="line">  iunlockput(ip);</span><br><span class="line">  end_op();</span><br><span class="line">  ip = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  p = myproc();</span><br><span class="line">  uint64 oldsz = p-&gt;sz;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Allocate two pages at the next page boundary.</span></span><br><span class="line">  <span class="comment">// Use the second as the user stack.</span></span><br><span class="line">  sz = PGROUNDUP(sz);</span><br><span class="line">  uint64 sz1;</span><br><span class="line">  <span class="keyword">if</span>((sz1 = uvmalloc(pagetable, sz, sz + <span class="number">2</span>*PGSIZE)) == <span class="number">0</span>)</span><br><span class="line">    <span class="keyword">goto</span> bad;</span><br><span class="line">  sz = sz1;</span><br><span class="line">  uvmclear(pagetable, sz<span class="number">-2</span>*PGSIZE);</span><br><span class="line">  sp = sz;</span><br><span class="line">  stackbase = sp - PGSIZE;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Push argument strings, prepare rest of stack in ustack.</span></span><br><span class="line">  <span class="keyword">for</span>(argc = <span class="number">0</span>; argv[argc]; argc++) &#123;</span><br><span class="line">    <span class="keyword">if</span>(argc &gt;= MAXARG)</span><br><span class="line">      <span class="keyword">goto</span> bad;</span><br><span class="line">    sp -= <span class="built_in">strlen</span>(argv[argc]) + <span class="number">1</span>;</span><br><span class="line">    sp -= sp % <span class="number">16</span>; <span class="comment">// riscv sp must be 16-byte aligned</span></span><br><span class="line">    <span class="keyword">if</span>(sp &lt; stackbase)</span><br><span class="line">      <span class="keyword">goto</span> bad;</span><br><span class="line">    <span class="keyword">if</span>(copyout(pagetable, sp, argv[argc], <span class="built_in">strlen</span>(argv[argc]) + <span class="number">1</span>) &lt; <span class="number">0</span>)</span><br><span class="line">      <span class="keyword">goto</span> bad;</span><br><span class="line">    ustack[argc] = sp;</span><br><span class="line">  &#125;</span><br><span class="line">  ustack[argc] = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// push the array of argv[] pointers.</span></span><br><span class="line">  sp -= (argc+<span class="number">1</span>) * <span class="keyword">sizeof</span>(uint64);</span><br><span class="line">  sp -= sp % <span class="number">16</span>;</span><br><span class="line">  <span class="keyword">if</span>(sp &lt; stackbase)</span><br><span class="line">    <span class="keyword">goto</span> bad;</span><br><span class="line">  <span class="keyword">if</span>(copyout(pagetable, sp, (<span class="type">char</span> *)ustack, (argc+<span class="number">1</span>)*<span class="keyword">sizeof</span>(uint64)) &lt; <span class="number">0</span>)</span><br><span class="line">    <span class="keyword">goto</span> bad;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// arguments to user main(argc, argv)</span></span><br><span class="line">  <span class="comment">// argc is returned via the system call return</span></span><br><span class="line">  <span class="comment">// value, which goes in a0.</span></span><br><span class="line">  p-&gt;trapframe-&gt;a1 = sp;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Save program name for debugging.</span></span><br><span class="line">  <span class="keyword">for</span>(last=s=path; *s; s++)</span><br><span class="line">    <span class="keyword">if</span>(*s == <span class="string">&#x27;/&#x27;</span>)</span><br><span class="line">      last = s+<span class="number">1</span>;</span><br><span class="line">  safestrcpy(p-&gt;name, last, <span class="keyword">sizeof</span>(p-&gt;name));</span><br><span class="line">    </span><br><span class="line">  <span class="comment">// Commit to the user image.</span></span><br><span class="line">  oldpagetable = p-&gt;pagetable;</span><br><span class="line">  p-&gt;pagetable = pagetable;</span><br><span class="line">  p-&gt;sz = sz;</span><br><span class="line">  p-&gt;trapframe-&gt;epc = elf.entry;  <span class="comment">// initial program counter = main</span></span><br><span class="line">  p-&gt;trapframe-&gt;sp = sp; <span class="comment">// initial stack pointer</span></span><br><span class="line">  proc_freepagetable(oldpagetable, oldsz);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> argc; <span class="comment">// this ends up in a0, the first argument to main(argc, argv)</span></span><br><span class="line"></span><br><span class="line"> bad:</span><br><span class="line">  <span class="keyword">if</span>(pagetable)</span><br><span class="line">    proc_freepagetable(pagetable, sz);</span><br><span class="line">  <span class="keyword">if</span>(ip)&#123;</span><br><span class="line">    iunlockput(ip);</span><br><span class="line">    end_op();</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h5 id="以下内容均复制自3-8-代码：exec"><a href="#以下内容均复制自3-8-代码：exec" class="headerlink" title="以下内容均复制自3.8 代码：exec"></a>以下内容均复制自<a target="_blank" rel="noopener" href="https://xv6.dgs.zone/tranlate_books/book-riscv-rev1/c3/s8.html">3.8 代码：exec</a></h5><p><code>exec</code>是创建地址空间的用户部分的系统调用。它使用一个存储在文件系统中的文件初始化地址空间的用户部分。</p>
+<p><code>exec</code>(kernel&#x2F;exec.c:13)使用<code>namei</code> (kernel&#x2F;exec.c:26)打开指定的二进制<code>path</code>，这在第8章中有解释。然后，它读取ELF头。Xv6应用程序以广泛使用的ELF格式描述，定义于(kernel&#x2F;elf.h)。ELF二进制文件由ELF头、<code>struct elfhdr</code>(kernel&#x2F;elf.h:6)，后面一系列的程序节头（section headers）、<code>struct proghdr</code>(kernel&#x2F;elf.h:25)组成。每个<code>proghdr</code>描述程序中必须加载到内存中的一节（section）；xv6程序只有一个程序节头，但是其他系统对于指令和数据部分可能各有单独的节。</p>
+<blockquote>
+<p> Note</p>
+<p><strong>ELF文件格式</strong>：在计算机科学中，是一种用于二进制文件、可执行文件、目标代码、共享库和核心转储格式文件。ELF是UNIX系统实验室（USL）作为应用程序二进制接口（Application Binary Interface，ABI）而开发和发布的，也是Linux的主要可执行文件格式。ELF文件由4部分组成，分别是ELF头（ELF header）、程序头表（Program header table）、节（Section）和节头表（Section header table）。实际上，一个文件中不一定包含全部内容，而且它们的位置也未必如同所示这样安排，只有ELF头的位置是固定的，其余各部分的位置、大小等信息由ELF头中的各项值来决定。</p>
+</blockquote>
+<p>第一步是快速检查文件可能包含ELF二进制的文件。ELF二进制文件以四个字节的“幻数”<code>0x7F</code>、“<code>E</code>”、“<code>L</code>”、“<code>F</code>”或<code>ELF_MAGIC</code>开始(kernel&#x2F;elf.h:3)。如果ELF头有正确的幻数，<code>exec</code>假设二进制文件格式良好。</p>
+<p><code>exec</code>使用<code>proc_pagetable</code> (kernel&#x2F;exec.c:38)分配一个没有用户映射的新页表，使用<code>uvmalloc</code> (kernel&#x2F;exec.c:52)为每个ELF段分配内存，并使用<code>loadseg</code> (kernel&#x2F;exec.c:10)将每个段加载到内存中。<code>loadseg</code>使用<code>walkaddr</code>找到分配内存的物理地址，在该地址写入ELF段的每一页，并使用<code>readi</code>从文件中读取。</p>
+<p>使用<code>exec</code>创建的第一个用户程序<code>/init</code>的程序节标题如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># objdump -p _init </span></span><br><span class="line">user/_init: file format elf64-littleriscv </span><br><span class="line">Program Header: </span><br><span class="line">    LOAD off 0x00000000000000b0 vaddr 0x0000000000000000 </span><br><span class="line">                                   paddr 0x0000000000000000 align 2**3 </span><br><span class="line">         filesz 0x0000000000000840 memsz 0x0000000000000858 flags rwx </span><br><span class="line">    STACK off 0x0000000000000000 vaddr 0x0000000000000000 </span><br><span class="line">                                   paddr 0x0000000000000000 align 2**4 </span><br><span class="line">         filesz 0x0000000000000000 memsz 0x0000000000000000 flags rw-</span><br></pre></td></tr></table></figure>
+
+<p>程序节头的<code>filesz</code>可能小于<code>memsz</code>，这表明它们之间的间隙应该用零来填充（对于C全局变量），而不是从文件中读取。对于&#x2F;init\，<code>filesz</code>是2112字节，<code>memsz</code>是2136字节，因此<code>uvmalloc</code>分配了足够的物理内存来保存2136字节，但只从文件&#x2F;init\中读取2112字节。</p>
+<p>现在<code>exec</code>分配并初始化用户栈。<strong>它只分配一个栈页面</strong>。<code>exec</code>一次将参数中的一个字符串复制到栈顶，并在<code>ustack</code>中记录指向它们的指针。它在传递给<code>main</code>的<code>argv</code>列表的末尾放置一个空指针。<code>ustack</code>中的前三个条目是伪返回程序计数器（fake return program counter）、<code>argc</code>和<code>argv</code>指针。</p>
+<p><span id = 'stacktest'><strong><code>exec</code>在栈页面的正下方放置了一个不可访问的页面，这样试图使用超过一个页面的程序就会出错。这个不可访问的页面还允许<code>exec</code>处理过大的参数</strong></span>；在这种情况下，被<code>exec</code>用来将参数复制到栈的函数<code>copyout</code>(kernel&#x2F;vm.c:355) 将会注意到目标页面不可访问，并返回-1。</p>
+<p>在准备新内存映像的过程中，如果<code>exec</code>检测到像无效程序段这样的错误，它会跳到标签<code>bad</code>，释放新映像，并返回-1。<code>exec</code>必须等待系统调用会成功后再释放旧映像：因为如果旧映像消失了，系统调用将无法返回-1。<code>exec</code>中唯一的错误情况发生在映像的创建过程中。一旦映像完成，<code>exec</code>就可以提交到新的页表(kernel&#x2F;exec.c:113)并释放旧的页表(kernel&#x2F;exec.c:117)。</p>
+<p><code>exec</code>将ELF文件中的字节加载到ELF文件指定地址的内存中。用户或进程可以将他们想要的任何地址放入ELF文件中。因此<code>exec</code>是有风险的，因为ELF文件中的地址可能会意外或故意的引用内核。对一个设计拙劣的内核来说，后果可能是一次崩溃，甚至是内核的隔离机制被恶意破坏（即安全漏洞）。xv6执行许多检查来避免这些风险。例如，<code>if(ph.vaddr + ph.memsz &lt; ph.vaddr)</code>检查总和是否溢出64位整数，危险在于用户可能会构造一个ELF二进制文件，其中的<code>ph.vaddr</code>指向用户选择的地址，而<code>ph.memsz</code>足够大，使总和溢出到0x1000，这看起来像是一个有效的值。在xv6的旧版本中，用户地址空间也包含内核（但在用户模式下不可读写），用户可以选择一个与内核内存相对应的地址，从而将ELF二进制文件中的数据复制到内核中。在xv6的RISC-V版本中，这是不可能的，因为内核有自己独立的页表；<code>loadseg</code>加载到进程的页表中，而不是内核的页表中。</p>
+<p>内核开发人员很容易省略关键的检查，而现实世界中的内核有很长一段丢失检查的历史，用户程序可以利用这些检查的缺失来获得内核特权。xv6可能没有完成验证提供给内核的用户级数据的全部工作，恶意用户程序可以利用这些数据来绕过xv6的隔离。</p>
+<hr>
+<p>有关exec系统调用，有一些重要的事情，</p>
+<ol>
+<li>exec系统调用会<strong>保留当前的文件描述符表单</strong>。所以任何在exec系统调用之前的文件描述符，例如0，1，2等。它们在新的程序中表示相同的东西。</li>
+<li>通常来说exec系统调用不会返回，因为<strong>exec会完全替换当前进程的内存</strong>，相当于当前进程不复存在了，所以exec系统调用已经没有地方能返回了。</li>
+</ol>
+<h5 id="举个例子：-1"><a href="#举个例子：-1" class="headerlink" title="举个例子："></a>举个例子：</h5><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span>&#123;</span><br><span class="line">    <span class="type">int</span> pid,status;</span><br><span class="line">    pid=fork();</span><br><span class="line">    <span class="keyword">if</span>(pid==<span class="number">0</span>)&#123;</span><br><span class="line">        <span class="type">char</span> *argv[]=&#123;<span class="string">&quot;echo&quot;</span>,<span class="string">&quot;THIS&quot;</span>,<span class="string">&quot;IS&quot;</span>,<span class="string">&quot;ECHO&quot;</span>,<span class="number">0</span>&#125;;<span class="comment">//0 标记了数组的结尾</span></span><br><span class="line">        exec(<span class="string">&quot;echo&quot;</span>,argv);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;exec failed!\n&quot;</span>);</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;parent waiting\n&quot;</span>);</span><br><span class="line">        wait(&amp;status);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;the child exited with stauts %d\n&quot;</span>,status);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">exit</span>(<span class="number">0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在这段代码中，子进程使用exec函数执行了echo函数。**如果exec执行成功，那么第7行与第8行的代码不会被执行。**只有exec执行失败，这两行代码才会执行。<strong>但是exec执行成功后两个进程之间的父子关系并没有改变，exec执行后echo函数的代码的结尾依旧有exit(0)代码，所以父进程的<code>wait(&amp;status);</code>依旧可以获取子进程的退出状态</strong></p>
+<h4 id="3-1-3-Exit函数与Wait函数"><a href="#3-1-3-Exit函数与Wait函数" class="headerlink" title="3.1.3 Exit函数与Wait函数"></a>3.1.3 Exit函数与Wait函数</h4><p><strong>Exit 与Wait函数通常用于父子进程之间传递参数。</strong></p>
+<h5 id="Exit的源代码-代码中有个人分析-："><a href="#Exit的源代码-代码中有个人分析-：" class="headerlink" title="Exit的源代码(代码中有个人分析)："></a>Exit的源代码(代码中有个人分析)：</h5><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Exit the current process.  Does not return.</span></span><br><span class="line"><span class="comment">// An exited process remains in the zombie state</span></span><br><span class="line"><span class="comment">// until its parent calls wait().</span></span><br><span class="line"><span class="type">void</span></span><br><span class="line"><span class="title function_">exit</span><span class="params">(<span class="type">int</span> status)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">proc</span> *<span class="title">p</span> =</span> myproc();</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;exit proc pid is =%d\n&quot;</span>,p-&gt;pid);</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;exit proc parent pid is =%d\n&quot;</span>,p-&gt;parent-&gt;pid);</span><br><span class="line">  <span class="comment">//exit不能退出初始进程，会报错</span></span><br><span class="line">  <span class="keyword">if</span>(p == initproc)</span><br><span class="line">    panic(<span class="string">&quot;init exiting&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Close all open files.</span></span><br><span class="line">  <span class="keyword">for</span>(<span class="type">int</span> fd = <span class="number">0</span>; fd &lt; NOFILE; fd++)&#123;</span><br><span class="line">    <span class="keyword">if</span>(p-&gt;ofile[fd])&#123;</span><br><span class="line">      <span class="class"><span class="keyword">struct</span> <span class="title">file</span> *<span class="title">f</span> =</span> p-&gt;ofile[fd];</span><br><span class="line">      fileclose(f);</span><br><span class="line">      p-&gt;ofile[fd] = <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">//日志相关操作,防止断电等意外</span></span><br><span class="line">  begin_op();</span><br><span class="line">  iput(p-&gt;cwd);</span><br><span class="line">  end_op();</span><br><span class="line">  p-&gt;cwd = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// we might re-parent a child to init. we can&#x27;t be precise about</span></span><br><span class="line">  <span class="comment">// waking up init, since we can&#x27;t acquire its lock once we&#x27;ve</span></span><br><span class="line">  <span class="comment">// acquired any other proc lock. so wake up init whether that&#x27;s</span></span><br><span class="line">  <span class="comment">// necessary or not. init may miss this wakeup, but that seems</span></span><br><span class="line">  <span class="comment">// harmless.</span></span><br><span class="line">  acquire(&amp;initproc-&gt;lock);</span><br><span class="line">  wakeup1(initproc);</span><br><span class="line">  release(&amp;initproc-&gt;lock);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// grab a copy of p-&gt;parent, to ensure that we unlock the same</span></span><br><span class="line">  <span class="comment">// parent we locked. in case our parent gives us away to init while</span></span><br><span class="line">  <span class="comment">// we&#x27;re waiting for the parent lock. we may then race with an</span></span><br><span class="line">  <span class="comment">// exiting parent, but the result will be a harmless spurious wakeup</span></span><br><span class="line">  <span class="comment">// to a dead or wrong process; proc structs are never re-allocated</span></span><br><span class="line">  <span class="comment">// as anything else.</span></span><br><span class="line">  acquire(&amp;p-&gt;lock);</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">proc</span> *<span class="title">original_parent</span> =</span> p-&gt;parent;</span><br><span class="line">  release(&amp;p-&gt;lock);</span><br><span class="line">  </span><br><span class="line">  <span class="comment">// we need the parent&#x27;s lock in order to wake it up from wait().</span></span><br><span class="line">  <span class="comment">// the parent-then-child rule says we have to lock it first.</span></span><br><span class="line">  acquire(&amp;original_parent-&gt;lock);</span><br><span class="line"></span><br><span class="line">  acquire(&amp;p-&gt;lock);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Give any children to init.</span></span><br><span class="line">  reparent(p);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Parent might be sleeping in wait().</span></span><br><span class="line">  wakeup1(original_parent);</span><br><span class="line"></span><br><span class="line">  p-&gt;xstate = status;</span><br><span class="line">  p-&gt;state = ZOMBIE;</span><br><span class="line"></span><br><span class="line">  release(&amp;original_parent-&gt;lock);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Jump into the scheduler, never to return.</span></span><br><span class="line">  sched();</span><br><span class="line">  panic(<span class="string">&quot;zombie exit&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>Exit</code>（*<strong>kernel&#x2F;proc.c*</strong>:333）记录退出状态码(status)，释放一些资源，<span id ='exit'> **将所有子进程提供给<code>init</code>进程 **  </span>，在父进程处于等待状态时唤醒父进程，将调用方标记为僵尸进程（zombie），并永久地让出CPU。最后的顺序有点棘手。退出进程必须在将其状态设置为<code>ZOMBIE</code>并唤醒父进程时持有其父进程的锁，因为父进程的锁是防止在<code>wait</code>中丢失唤醒的条件锁。子级还必须持有自己的<code>p-&gt;lock</code>，否则父级可能会看到它处于<code>ZOMBIE</code>状态，并在它仍运行时释放它。锁获取顺序对于避免死锁很重要：因为<code>wait</code>先获取父锁再获取子锁，所以<code>exit</code>必须使用相同的顺序。</p>
+<p><code>Exit</code>调用一个专门的唤醒函数<code>wakeup1</code>，该函数仅唤醒父进程，且父进程必须正在<code>wait</code>中休眠（*<strong>kernel&#x2F;proc.c*</strong>:598）。在将自身状态设置为<code>ZOMBIE</code>之前，子进程唤醒父进程可能看起来不正确，但这是安全的：虽然<code>wakeup1</code>可能会导致父进程运行，但<code>wait</code>中的循环在<code>scheduler</code>释放子进程的<code>p-&gt;lock</code>之前无法检查子进程，所以<code>wait</code>在<code>exit</code>将其状态设置为<code>ZOMBIE</code>（kernel&#x2F;proc.c:386）之前不能查看退出进程。</p>
+<blockquote>
+<p>回答来自chatgpt</p>
+<p>1.Linux 在杀死一个进程时为什么要让子进程重新设置父进程？</p>
+<p>Linux 在杀死一个进程时需要让子进程重新设置父进程是为了确保子进程不会成为孤儿进程。当父进程被终止时，操作系统会将孤儿进程的新父进程设置为 init 进程（PID 为 1 的进程），这样可以确保孤儿进程仍然能够被正确地回收和管理。因此，在杀死一个进程时，需要让子进程重新设置父进程，以避免产生孤儿进程。</p>
+<p>2.为什么要唤醒父进程？</p>
+<p>在Linux中，当一个子进程终止时，通常会向其父进程发送一个 SIGCHLD 信号。父进程通常会通过调用 wait() 系统调用来等待和处理子进程的终止状态。这样做可以确保父进程能够及时得知子进程的退出状态，以便进行适当的清理和处理。</p>
+<p>因此，在杀死一个进程时，需要唤醒父进程，使其有机会处理子进程的终止状态，并采取必要的操作，比如回收资源或记录日志等。这种通信机制可以确保进程间的协同工作和资源管理。</p>
+</blockquote>
+<h5 id="Wait函数的源代码"><a href="#Wait函数的源代码" class="headerlink" title="Wait函数的源代码"></a>Wait函数的源代码</h5><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Wait for a child process to exit and return its pid.</span></span><br><span class="line"><span class="comment">// Return -1 if this process has no children.</span></span><br><span class="line"><span class="type">int</span></span><br><span class="line"><span class="title function_">wait</span><span class="params">(uint64 addr)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">proc</span> *<span class="title">np</span>;</span></span><br><span class="line">  <span class="type">int</span> havekids, pid;</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">proc</span> *<span class="title">p</span> =</span> myproc();</span><br><span class="line"></span><br><span class="line">  <span class="comment">// hold p-&gt;lock for the whole time to avoid lost</span></span><br><span class="line">  <span class="comment">// wakeups from a child&#x27;s exit().</span></span><br><span class="line">  acquire(&amp;p-&gt;lock);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span>(;;)&#123;</span><br><span class="line">    <span class="comment">// Scan through table looking for exited children.</span></span><br><span class="line">    havekids = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span>(np = proc; np &lt; &amp;proc[NPROC]; np++)&#123;</span><br><span class="line">      <span class="comment">// this code uses np-&gt;parent without holding np-&gt;lock.</span></span><br><span class="line">      <span class="comment">// acquiring the lock first would cause a deadlock,</span></span><br><span class="line">      <span class="comment">// since np might be an ancestor, and we already hold p-&gt;lock.</span></span><br><span class="line">      <span class="keyword">if</span>(np-&gt;parent == p)&#123;</span><br><span class="line">        <span class="comment">// np-&gt;parent can&#x27;t change between the check and the acquire()</span></span><br><span class="line">        <span class="comment">// because only the parent changes it, and we&#x27;re the parent.</span></span><br><span class="line">        acquire(&amp;np-&gt;lock);</span><br><span class="line">        havekids = <span class="number">1</span>;</span><br><span class="line">        <span class="keyword">if</span>(np-&gt;state == ZOMBIE)&#123;</span><br><span class="line">          <span class="comment">// Found one.</span></span><br><span class="line">          pid = np-&gt;pid;</span><br><span class="line">          <span class="keyword">if</span>(addr != <span class="number">0</span> &amp;&amp; copyout(p-&gt;pagetable, addr, (<span class="type">char</span> *)&amp;np-&gt;xstate,</span><br><span class="line">                                  <span class="keyword">sizeof</span>(np-&gt;xstate)) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">            release(&amp;np-&gt;lock);</span><br><span class="line">            release(&amp;p-&gt;lock);</span><br><span class="line">            <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">          &#125;</span><br><span class="line">          freeproc(np);</span><br><span class="line">          release(&amp;np-&gt;lock);</span><br><span class="line">          release(&amp;p-&gt;lock);</span><br><span class="line">          <span class="keyword">return</span> pid;</span><br><span class="line">        &#125;</span><br><span class="line">        release(&amp;np-&gt;lock);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// No point waiting if we don&#x27;t have any children.</span></span><br><span class="line">    <span class="keyword">if</span>(!havekids || p-&gt;killed)&#123;</span><br><span class="line">      release(&amp;p-&gt;lock);</span><br><span class="line">      <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Wait for a child to exit.</span></span><br><span class="line">    sleep(p, &amp;p-&gt;lock);  <span class="comment">//DOC: wait-sleep</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>父进程调用Wait函数等待子进程的退出。Wait函数会<strong>死循环(:14)扫描进程表直到发现子进程(:21)</strong></p>
+<p><strong><code>wait(&amp;state)</code>函数返回退出的的子进程的PID号，并将退出的状态标志保存在<code>state</code>中</strong>,如果一个父进程拥有多个子进程，wait(0)只能检测到一个子进程的退出，要检测其他子进程的退出状态，父进程需要调用 wait函数多次，或者使用循环来处理所有子进程的退出状态。</p>
+<h4 id="3-1-4-Initcode-PID-1-的进程"><a href="#3-1-4-Initcode-PID-1-的进程" class="headerlink" title="3.1.4 Initcode,PID&#x3D;1 的进程"></a>3.1.4 <code>Initcode</code>,PID&#x3D;1 的进程</h4> <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">char</span> *argv[] = &#123; <span class="string">&quot;sh&quot;</span>, <span class="number">0</span> &#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span></span><br><span class="line"><span class="title function_">main</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">int</span> pid, wpid;</span><br><span class="line">  <span class="comment">//文件描述符设置</span></span><br><span class="line">  <span class="keyword">if</span>(open(<span class="string">&quot;console&quot;</span>, O_RDWR) &lt; <span class="number">0</span>)&#123;</span><br><span class="line">    mknod(<span class="string">&quot;console&quot;</span>, CONSOLE, <span class="number">0</span>);</span><br><span class="line">    open(<span class="string">&quot;console&quot;</span>, O_RDWR);</span><br><span class="line">  &#125;</span><br><span class="line">  dup(<span class="number">0</span>);  <span class="comment">// stdout</span></span><br><span class="line">  dup(<span class="number">0</span>);  <span class="comment">// stderr</span></span><br><span class="line">  <span class="comment">//第一层死循环</span></span><br><span class="line">  <span class="keyword">for</span>(;;)&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;init: starting sh\n&quot;</span>);</span><br><span class="line">    <span class="comment">//这里的pid为新建shell进程的pid号，而非initcode的pid号</span></span><br><span class="line">    pid = fork();</span><br><span class="line">    <span class="keyword">if</span>(pid &lt; <span class="number">0</span>)&#123;</span><br><span class="line">      <span class="built_in">printf</span>(<span class="string">&quot;init: fork failed\n&quot;</span>);</span><br><span class="line">      <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//子进程运行shell程序</span></span><br><span class="line">    <span class="keyword">if</span>(pid == <span class="number">0</span>)&#123;</span><br><span class="line">      exec(<span class="string">&quot;sh&quot;</span>, argv);</span><br><span class="line">      <span class="built_in">printf</span>(<span class="string">&quot;init: exec sh failed\n&quot;</span>);</span><br><span class="line">      <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">	<span class="comment">//父进程运行第二层死循环，等待任一子进程返回</span></span><br><span class="line">    <span class="keyword">for</span>(;;)&#123;</span><br><span class="line">      <span class="comment">// this call to wait() returns if the shell exits,</span></span><br><span class="line">      <span class="comment">// or if a parentless process exits.</span></span><br><span class="line">      wpid = wait((<span class="type">int</span> *) <span class="number">0</span>);</span><br><span class="line">      <span class="keyword">if</span>(wpid == pid)&#123;</span><br><span class="line">        <span class="comment">// the shell exited; restart it.</span></span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;the shell exited; restart it.\n&quot;</span>);</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">      &#125; <span class="keyword">else</span> <span class="keyword">if</span>(wpid &lt; <span class="number">0</span>)&#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;init: wait returned an error\n&quot;</span>);</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// it was a parentless process; do nothing.</span></span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong><code>initcode</code>函数作为XV6操作系统中用户级别第一个进程<code>(PID=1)</code>，其主要作用是保证<code>shell</code>进程存在.</strong></p>
+<p>注意：<code>initcode</code>函数大部分时间运行在第二层死循环中<code>c:30-43</code>，<strong>由于操作系统运行过程中肯定会杀死不少进程，而进程被杀死时，其子进程的父进程会被设置为<code>initcode</code></strong> <a href = '#exit' >（原因）</a>，所以<code>wpid</code>得到的不一定是<code>shell</code>程序的<code>pid</code>号，需要<code>if</code>条件句进行判断。</p>
+<p>当判断出来<code>shell</code>进程停止运行了，<code>initcode</code>需要重新运行<code>shell</code>程序。</p>
+<h4 id="3-1-5-shell程序"><a href="#3-1-5-shell程序" class="headerlink" title="3.1.5 shell程序"></a>3.1.5 <code>shell</code>程序</h4><p>shell程序的代码比较多，先贴出来<code>main</code>函数代码:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span></span><br><span class="line"><span class="title function_">main</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">static</span> <span class="type">char</span> buf[<span class="number">100</span>];</span><br><span class="line">  <span class="type">int</span> fd;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Ensure that three file descriptors are open.</span></span><br><span class="line">  <span class="keyword">while</span>((fd = open(<span class="string">&quot;console&quot;</span>, O_RDWR)) &gt;= <span class="number">0</span>)&#123;</span><br><span class="line">    <span class="keyword">if</span>(fd &gt;= <span class="number">3</span>)&#123;</span><br><span class="line">      close(fd);</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Read and run input commands.</span></span><br><span class="line">  <span class="keyword">while</span>(getcmd(buf, <span class="keyword">sizeof</span>(buf)) &gt;= <span class="number">0</span>)&#123;</span><br><span class="line">    <span class="keyword">if</span>(buf[<span class="number">0</span>] == <span class="string">&#x27;c&#x27;</span> &amp;&amp; buf[<span class="number">1</span>] == <span class="string">&#x27;d&#x27;</span> &amp;&amp; buf[<span class="number">2</span>] == <span class="string">&#x27; &#x27;</span>)&#123;</span><br><span class="line">      <span class="comment">// Chdir must be called by the parent, not the child.</span></span><br><span class="line">      buf[<span class="built_in">strlen</span>(buf)<span class="number">-1</span>] = <span class="number">0</span>;  <span class="comment">// chop \n</span></span><br><span class="line">      <span class="keyword">if</span>(chdir(buf+<span class="number">3</span>) &lt; <span class="number">0</span>)</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="number">2</span>, <span class="string">&quot;cannot cd %s\n&quot;</span>, buf+<span class="number">3</span>);</span><br><span class="line">      <span class="keyword">continue</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span>(fork1() == <span class="number">0</span>)</span><br><span class="line">      runcmd(parsecmd(buf));</span><br><span class="line">    wait(<span class="number">0</span>);</span><br><span class="line">  &#125;  </span><br><span class="line">  <span class="built_in">exit</span>(<span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span></span><br><span class="line"><span class="title function_">fork1</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">int</span> pid;</span><br><span class="line"></span><br><span class="line">  pid = fork();</span><br><span class="line">  <span class="keyword">if</span>(pid == <span class="number">-1</span>)</span><br><span class="line">    panic(<span class="string">&quot;fork&quot;</span>);</span><br><span class="line">  <span class="keyword">return</span> pid;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>c:16</code>之前为文件描述符的相关设置，之后为<code>shell</code>程序的逻辑关键，可以看出：</p>
+<p>**每次循环<code>shell</code>程序从缓冲区<code>buf</code>中读取指令<code>c:16</code>,使用<code>fork</code>函数，生成一个子进程，子进程执行指令，<code>shell</code>程序自身等待子进程的结束后进入下一次循环。正常情况下,<code>shell</code>程序一直处于循环之中，不会中止。**可以在未曾修改过代码的XV6系统中(也就是说，initcode，与shell程序都正常运转)，修改<code>fork</code>函数，输出父进程与子进程的<code>pid</code>号;可以看到输出结果符合预期：</p>
+<img src="/a33744ac/%E4%BF%AE%E6%94%B9fork%E5%87%BD%E6%95%B0%EF%BC%8C%E8%BE%93%E5%87%BA%E7%88%B6%E8%BF%9B%E7%A8%8B%E4%B8%8E%E5%AD%90%E8%BF%9B%E7%A8%8B%E7%9A%84pid%E5%8F%B7.png" class="" title="image-20240525183216789">
+
+<hr>
+<h3 id="3-2正式开始分析BUG"><a href="#3-2正式开始分析BUG" class="headerlink" title="3.2正式开始分析BUG"></a>3.2正式开始分析BUG</h3><h4 id="3-2-1-到底发生了什么？"><a href="#3-2-1-到底发生了什么？" class="headerlink" title="3.2.1 到底发生了什么？"></a>3.2.1 到底发生了什么？</h4><p>**将发生BUG的代码，进行修改，**让<code>fork</code>函数执行时，输出父进程与子进程的<code>pid</code>号;同时在中断处理函数中的<a href = '#wrongcode'>错误代码</a>进行修改，在杀死进程前输出被杀死进程的<code>pid</code>号;<code>initcode</code>第一层循环开始是输出<code>----------------------------</code>,最终输出结果如下：</p>
+<img src="/a33744ac/%E4%BB%A3%E7%A0%81%E6%8A%A5%E9%94%99.png" class="" title="image-20240525175200126">
+
+<p><strong>从图中可以看出，<code>shell</code>进程<code>fork</code>出的子进程在BUG发生后终止了运行，shell程序紧接着也停止了运行。<code>initcode</code>检测到了<code>shell</code>程序的中止，重新启动<code>shell</code>并输出：<code>init: starting sh</code></strong></p>
+<h4 id="3-2-2-shell进程在哪里发生了错误？"><a href="#3-2-2-shell进程在哪里发生了错误？" class="headerlink" title="3.2.2 shell进程在哪里发生了错误？"></a>3.2.2 <code>shell</code>进程在哪里发生了错误？</h4><p>通过广泛使用<code>printf</code>函数，与GDB调试工具，来定位BUG产生的地区：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//为 shell程序增加了大量的printf</span></span><br><span class="line"><span class="type">int</span></span><br><span class="line"><span class="title function_">main</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">static</span> <span class="type">char</span> buf[<span class="number">100</span>];</span><br><span class="line">  <span class="type">int</span> fd;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Ensure that three file descriptors are open.</span></span><br><span class="line">  <span class="keyword">while</span>((fd = open(<span class="string">&quot;console&quot;</span>, O_RDWR)) &gt;= <span class="number">0</span>)&#123;</span><br><span class="line">    <span class="keyword">if</span>(fd &gt;= <span class="number">3</span>)&#123;</span><br><span class="line">      close(fd);</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Read and run input commands.</span></span><br><span class="line">  <span class="keyword">while</span>(getcmd(buf, <span class="keyword">sizeof</span>(buf)) &gt;= <span class="number">0</span>)&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;begin loop\n&quot;</span>);   </span><br><span class="line">    <span class="keyword">if</span>(buf[<span class="number">0</span>] == <span class="string">&#x27;c&#x27;</span> &amp;&amp; buf[<span class="number">1</span>] == <span class="string">&#x27;d&#x27;</span> &amp;&amp; buf[<span class="number">2</span>] == <span class="string">&#x27; &#x27;</span>)&#123;</span><br><span class="line">      <span class="comment">// Chdir must be called by the parent, not the child.</span></span><br><span class="line">      buf[<span class="built_in">strlen</span>(buf)<span class="number">-1</span>] = <span class="number">0</span>;  <span class="comment">// chop \n</span></span><br><span class="line">      <span class="keyword">if</span>(chdir(buf+<span class="number">3</span>) &lt; <span class="number">0</span>)</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="number">2</span>, <span class="string">&quot;cannot cd %s\n&quot;</span>, buf+<span class="number">3</span>);</span><br><span class="line">      <span class="keyword">continue</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span>(fork1() == <span class="number">0</span>)</span><br><span class="line">      runcmd(parsecmd(buf));</span><br><span class="line">    wait(<span class="number">0</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;end loop\n&quot;</span>);   </span><br><span class="line">  &#125;</span><br><span class="line">   </span><br><span class="line">  <span class="built_in">exit</span>(<span class="number">0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<img src="/a33744ac/%E4%BB%A3%E7%A0%81%E6%8A%A5%E9%94%992.png" class="" title="image-20240525185443362">
+
+<p>分析结果，主要的问题是 <code>while(getcmd(buf, sizeof(buf)) &gt;= 0)</code> <strong>这段代码，就如同BUG的现象一样奇特，这段代码在<code>shell</code>程序第一次读取指令时不会报错，而第二次读取指令时会报错。</strong></p>
+<p>为出错的<code>getcmd</code>函数增加<code>printf</code>函数:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span></span><br><span class="line"><span class="title function_">getcmd</span><span class="params">(<span class="type">char</span> *buf, <span class="type">int</span> nbuf)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;getcmd begin\n&quot;</span>);</span><br><span class="line">  <span class="built_in">fprintf</span>(<span class="number">2</span>, <span class="string">&quot;$ &quot;</span>);</span><br><span class="line">  <span class="built_in">memset</span>(buf, <span class="number">0</span>, nbuf);</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;memset finish\n&quot;</span>);</span><br><span class="line">  gets(buf, nbuf);</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;gets finish\n&quot;</span>);</span><br><span class="line">  <span class="keyword">if</span>(buf[<span class="number">0</span>] == <span class="number">0</span>) <span class="comment">// EOF</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>输出结果如下：</p>
+<img src="/a33744ac/%E4%BB%A3%E7%A0%81%E6%8A%A5%E9%94%993.png" class="" title="image-20240525185640094">
+
+<p><strong>最终定位到<code>memset(buf, 0, nbuf);</code>这段代码，这段代码第一次执行没有问题，第二次执行会报错。</strong></p>
+<p>查看<code>memset</code>的源代码,无法提供太多有用的信息</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span>*</span><br><span class="line"><span class="title function_">memset</span><span class="params">(<span class="type">void</span> *dst, <span class="type">int</span> c, uint n)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">char</span> *cdst = (<span class="type">char</span> *) dst;</span><br><span class="line">  <span class="type">int</span> i;</span><br><span class="line">  <span class="keyword">for</span>(i = <span class="number">0</span>; i &lt; n; i++)&#123;</span><br><span class="line">    cdst[i] = c;<span class="comment">//实际报错的地方</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> dst;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h5 id="shell-fork后的子进程cow发生在哪"><a href="#shell-fork后的子进程cow发生在哪" class="headerlink" title="shell fork后的子进程cow发生在哪"></a><code>shell</code> <code>fork</code>后的子进程<code>cow</code>发生在哪</h5><p>通过寻找<code>shell</code>开始崩溃的代码方法一样，最终发现子进程发生错误的指令位于:<code>main-&gt;runcmd(parsecmd(buf))-&gt;parsecmd(buf)-&gt;parseline(&amp;s, es)-&gt;parsepipe(ps, es)-&gt;parseexec(ps, es)-&gt;execcmd()-&gt;malloc(sizeof(*cmd))</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span>*</span><br><span class="line"><span class="title function_">malloc</span><span class="params">(uint nbytes)</span></span><br><span class="line">&#123;</span><br><span class="line">  Header *p, *prevp;</span><br><span class="line">  uint nunits;  </span><br><span class="line">  nunits = (nbytes + <span class="keyword">sizeof</span>(Header) - <span class="number">1</span>)/<span class="keyword">sizeof</span>(Header) + <span class="number">1</span>;  </span><br><span class="line">  <span class="keyword">if</span>((prevp = freep) == <span class="number">0</span>)&#123;</span><br><span class="line">    base.s.ptr = freep = prevp = &amp;base;<span class="comment">//实际报错的地方。</span></span><br><span class="line">    base.s.size = <span class="number">0</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">for</span>(p = prevp-&gt;s.ptr; ; prevp = p, p = p-&gt;s.ptr)&#123;</span><br><span class="line">    <span class="keyword">if</span>(p-&gt;s.size &gt;= nunits)&#123;</span><br><span class="line">      <span class="keyword">if</span>(p-&gt;s.size == nunits)</span><br><span class="line">        prevp-&gt;s.ptr = p-&gt;s.ptr;</span><br><span class="line">      <span class="keyword">else</span> &#123;</span><br><span class="line">        p-&gt;s.size -= nunits;</span><br><span class="line">        p += p-&gt;s.size;</span><br><span class="line">        p-&gt;s.size = nunits;</span><br><span class="line">      &#125;</span><br><span class="line">      freep = prevp;</span><br><span class="line">      <span class="keyword">return</span> (<span class="type">void</span>*)(p + <span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span>(p == freep)</span><br><span class="line">      <span class="keyword">if</span>((p = morecore(nunits)) == <span class="number">0</span>)</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong><code>malloc</code>与<code>memset</code>都为高频使用的函数，这两个代码出错的可能性极低，我更愿意相信是之前的地方存在逻辑错误，只是到了这里爆发了出来</strong></p>
+<h4 id="3-2-3-内核中发生了什么"><a href="#3-2-3-内核中发生了什么" class="headerlink" title="3.2.3 内核中发生了什么?"></a>3.2.3 内核中发生了什么?</h4><p>在<code>usertrap</code>中<strong>增加更多的printf代码</strong>，当发生<code>cow</code>错误后输出”cow\n”:</p>
+<p>此图为有BUG的输出结果：</p>
+<img src="/a33744ac/%E4%BB%A3%E7%A0%81%E6%8A%A5%E9%94%994.png" class="" title="image-20240525192945858">
+
+<p>此图为正常运行的数据结果：</p>
+<img src="/a33744ac/%E6%AD%A3%E5%B8%B8%E8%BF%90%E8%A1%8C.png" class="" title="image-20240525200431737">
+
+<p>对比可以看出：</p>
+<p>1.<code>initcode</code> <code>fork</code>出来<code>shell</code>程序时并没有发生<code>cow</code></p>
+<p>2.<code>shell</code>程序<code>fork</code>并执行<code>cmd</code>时发生了三次<code>cow</code>,第二次<code>cow</code>导致了子进程的崩溃， 第三次<code>cow</code>导致<code>shell</code>程序的崩溃，而之前我们发现报错的直接原因是<code>memset</code>与<code>malloc</code>这两个高频使用的函数。</p>
+<h3 id="3-3-以下皆为推论"><a href="#3-3-以下皆为推论" class="headerlink" title="3.3 以下皆为推论"></a>3.3 以下皆为推论</h3><img src="/a33744ac/%E6%94%BE%E5%BC%83.png" class="" title="image-20240525204530976">
+
+<p><code>Fork</code>函数后面常常跟<code>exec</code>函数，该函数的一大特点便是<strong>完全替换当前进程的内存</strong>，所以将栈指针下方皆视为非法地址，在遇到<code>exec</code>函数的情况下，即使不当场报错，也可能对后续的函数产生不良影响。同时，部分进程需要对局部变量进行修改，而局部变量就位于栈指针下，随便从其他实验借来的代码没有考虑到这些情况导致BUG的发生。</p>
+<p>原本我预期可以清楚地分析出BUG的所在，但是整个过程相比于自己平时手搓的代码DEBUG还是太复杂了，最终只是推论解释这个BUG。但是为了解决这个BUG，我仍进行了相当长时间的思考，我认为<strong>即使结果没有达到预期，我中间的思维过程也不会白白浪费掉，所以我决定将思路记录下来。</strong></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/MIT6-S081/" rel="tag"># MIT6.S081</a>
+              <a href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" rel="tag"># 操作系统</a>
+              <a href="/tags/%E5%86%99%E6%97%B6%E5%A4%8D%E5%88%B6/" rel="tag"># 写时复制</a>
+              <a href="/tags/fork/" rel="tag"># fork</a>
+              <a href="/tags/%E5%86%85%E6%A0%B8/" rel="tag"># 内核</a>
+              <a href="/tags/BUG/" rel="tag"># BUG</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/4fd45b61.html" rel="prev" title="MIT6.S081_2020_Lab5:LazyPageAllocation">
+      <i class="fa fa-chevron-left"></i> MIT6.S081_2020_Lab5:LazyPageAllocation
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/e18dbd36.html" rel="next" title="MIT6.S081_2020_Lab6:Copy-on-Write">
+      MIT6.S081_2020_Lab6:Copy-on-Write <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81BUG%E7%9A%84%E8%A1%A8%E7%8E%B0"><span class="nav-number">1.</span> <span class="nav-text">一、BUG的表现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E7%BB%93%E8%AE%BA"><span class="nav-number">2.</span> <span class="nav-text">二、结论</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%8E%BB%E6%8E%89%E8%BF%99%E6%AE%B5%E4%BB%A3%E7%A0%81%E5%8F%AF%E4%BB%A5%E9%80%9A%E8%BF%87stacktest"><span class="nav-number">2.1.</span> <span class="nav-text">为什么去掉这段代码可以通过stacktest?</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E6%8E%A2%E7%A9%B6BUG%E5%8F%91%E7%94%9F%E7%9A%84%E8%BF%87%E7%A8%8B"><span class="nav-number">3.</span> <span class="nav-text">三、探究BUG发生的过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1%E6%9C%89%E5%85%B3%E5%87%BD%E6%95%B0%E6%8F%90%E5%89%8D%E6%A2%B3%E7%90%86"><span class="nav-number">3.1.</span> <span class="nav-text">3.1有关函数提前梳理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#3-1-1-Fork%E5%87%BD%E6%95%B0"><span class="nav-number">3.1.1.</span> <span class="nav-text">3.1.1 Fork函数</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%B8%BE%E4%B8%AA%E4%BE%8B%E5%AD%90%EF%BC%9A"><span class="nav-number">3.1.1.1.</span> <span class="nav-text">举个例子：</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-1-2-Exec-%E5%87%BD%E6%95%B0"><span class="nav-number">3.1.2.</span> <span class="nav-text">3.1.2 Exec 函数</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%BB%A5%E4%B8%8B%E5%86%85%E5%AE%B9%E5%9D%87%E5%A4%8D%E5%88%B6%E8%87%AA3-8-%E4%BB%A3%E7%A0%81%EF%BC%9Aexec"><span class="nav-number">3.1.2.1.</span> <span class="nav-text">以下内容均复制自3.8 代码：exec</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%B8%BE%E4%B8%AA%E4%BE%8B%E5%AD%90%EF%BC%9A-1"><span class="nav-number">3.1.2.2.</span> <span class="nav-text">举个例子：</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-1-3-Exit%E5%87%BD%E6%95%B0%E4%B8%8EWait%E5%87%BD%E6%95%B0"><span class="nav-number">3.1.3.</span> <span class="nav-text">3.1.3 Exit函数与Wait函数</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Exit%E7%9A%84%E6%BA%90%E4%BB%A3%E7%A0%81-%E4%BB%A3%E7%A0%81%E4%B8%AD%E6%9C%89%E4%B8%AA%E4%BA%BA%E5%88%86%E6%9E%90-%EF%BC%9A"><span class="nav-number">3.1.3.1.</span> <span class="nav-text">Exit的源代码(代码中有个人分析)：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Wait%E5%87%BD%E6%95%B0%E7%9A%84%E6%BA%90%E4%BB%A3%E7%A0%81"><span class="nav-number">3.1.3.2.</span> <span class="nav-text">Wait函数的源代码</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-1-4-Initcode-PID-1-%E7%9A%84%E8%BF%9B%E7%A8%8B"><span class="nav-number">3.1.4.</span> <span class="nav-text">3.1.4 Initcode,PID&#x3D;1 的进程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-1-5-shell%E7%A8%8B%E5%BA%8F"><span class="nav-number">3.1.5.</span> <span class="nav-text">3.1.5 shell程序</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2%E6%AD%A3%E5%BC%8F%E5%BC%80%E5%A7%8B%E5%88%86%E6%9E%90BUG"><span class="nav-number">3.2.</span> <span class="nav-text">3.2正式开始分析BUG</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-1-%E5%88%B0%E5%BA%95%E5%8F%91%E7%94%9F%E4%BA%86%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-number">3.2.1.</span> <span class="nav-text">3.2.1 到底发生了什么？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-2-shell%E8%BF%9B%E7%A8%8B%E5%9C%A8%E5%93%AA%E9%87%8C%E5%8F%91%E7%94%9F%E4%BA%86%E9%94%99%E8%AF%AF%EF%BC%9F"><span class="nav-number">3.2.2.</span> <span class="nav-text">3.2.2 shell进程在哪里发生了错误？</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#shell-fork%E5%90%8E%E7%9A%84%E5%AD%90%E8%BF%9B%E7%A8%8Bcow%E5%8F%91%E7%94%9F%E5%9C%A8%E5%93%AA"><span class="nav-number">3.2.2.1.</span> <span class="nav-text">shell fork后的子进程cow发生在哪</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-3-%E5%86%85%E6%A0%B8%E4%B8%AD%E5%8F%91%E7%94%9F%E4%BA%86%E4%BB%80%E4%B9%88"><span class="nav-number">3.2.3.</span> <span class="nav-text">3.2.3 内核中发生了什么?</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-%E4%BB%A5%E4%B8%8B%E7%9A%86%E4%B8%BA%E6%8E%A8%E8%AE%BA"><span class="nav-number">3.3.</span> <span class="nav-text">3.3 以下皆为推论</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">水更流</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">21</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">36</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/0shuigengliu" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;0shuigengliu" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://space.bilibili.com/289595050" title="bilibili → https:&#x2F;&#x2F;space.bilibili.com&#x2F;289595050" rel="noopener" target="_blank"><i class="fa fa-fw fa-bilibili"></i>bilibili</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">水更流</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+<div class="powered-by">
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <i class="fa fa-user-md"></i>
+    <span id="busuanzi_container_site_uv">
+        本站访客数:<span id="busuanzi_value_site_uv"></span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span id="busuanzi_container_site_pv">
+        本站访问量<span id="busuanzi_value_site_pv"></span>
+    </span>
+</div>
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

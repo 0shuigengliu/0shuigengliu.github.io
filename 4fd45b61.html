@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 8.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.shui2000.top","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="将xv6系统的eager allocation 修改为 lazy allocation">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MIT6.S081_2020_Lab5:LazyPageAllocation">
+<meta property="og:url" content="https://www.shui2000.top/4fd45b61.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="将xv6系统的eager allocation 修改为 lazy allocation">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.shui2000.top/4fd45b61/%E6%83%B0%E6%80%A7%E5%88%86%E9%85%8D.png">
+<meta property="og:image" content="https://www.shui2000.top/4fd45b61/%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8%E5%8F%B7.png">
+<meta property="article:published_time" content="2024-05-07T10:13:30.000Z">
+<meta property="article:modified_time" content="2026-07-08T16:55:35.114Z">
+<meta property="article:author" content="水更流">
+<meta property="article:tag" content="MIT6.S081">
+<meta property="article:tag" content="allocation">
+<meta property="article:tag" content="lazy">
+<meta property="article:tag" content="page">
+<meta property="article:tag" content="地址映射">
+<meta property="article:tag" content="惰性分配">
+<meta property="article:tag" content="操作系统">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.shui2000.top/4fd45b61/%E6%83%B0%E6%80%A7%E5%88%86%E9%85%8D.png">
+
+<link rel="canonical" href="https://www.shui2000.top/4fd45b61.html">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>MIT6.S081_2020_Lab5:LazyPageAllocation | Hexo</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Hexo</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.shui2000.top/4fd45b61.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="水更流">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hexo">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MIT6.S081_2020_Lab5:LazyPageAllocation
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2024-05-07 18:13:30" itemprop="dateCreated datePublished" datetime="2024-05-07T18:13:30+08:00">2024-05-07</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2026-07-09 00:55:35" itemprop="dateModified" datetime="2026-07-09T00:55:35+08:00">2026-07-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E9%A1%B9%E7%9B%AE/" itemprop="url" rel="index"><span itemprop="name">项目</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">将xv6系统的eager allocation 修改为 lazy allocation</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="一、什么是惰性分配（lazy-page-allocation）？"><a href="#一、什么是惰性分配（lazy-page-allocation）？" class="headerlink" title="一、什么是惰性分配（lazy page allocation）？"></a>一、什么是惰性分配（<code>lazy page allocation</code>）？</h2><h3 id="1-eager-allocation"><a href="#1-eager-allocation" class="headerlink" title="1.eager allocation"></a>1.<code>eager allocation</code></h3><p><code>sbrk</code>是xv6提供的系统调用，使得用户应用程序能扩大自己的<code>heap</code>。<em><em>当一个应用程序启动的时候，<code>PAGESIZE</code>为<code>heap</code>的最底端，同时也是<code>stack</code>的最顶端。这个位置通过代表进程的数据结构中的<code>sz</code>字段表示，这里以</em><code>p-&gt;sz</code>表示</em>。**</p>
+<img src="/4fd45b61/%E6%83%B0%E6%80%A7%E5%88%86%E9%85%8D.png" class="" title="image-20240422220806810">
+
+<p>当调用<code>sbrk</code>时，它的参数是整数，代表了你想要申请的字节数.</p>
+<p>这意味着，当<code>sbrk</code>实际发生或者被调用的时候，内核会分配一些物理内存，并将这些内存映射到用户应用程序的地址空间，然后将内存内容初始化为0，再返回<code>sbrk</code>系统调用。这样，应用程序可以通过多次<code>sbrk</code>系统调用来增加它所需要的内存。类似的，应用程序还可以通过给<code>sbrk</code>传入负数作为参数，来减少或者压缩它的地址空间。</p>
+<p>在XV6中，<strong><code>sbrk</code>的实现默认是<code>eager allocation</code></strong>。这表示了，一旦调用了<code>sbrk</code>，内核会<strong>立即分配</strong>应用程序所需要的物理内存。但是实际上，对于应用程序来说很难预测自己需要多少内存，所以通常来说，应用程序倾向于申请多于自己所需要的内存。这意味着，进程的内存消耗会增加许多，但是有部分内存永远也不会被应用程序所使用到。</p>
+<h3 id="2-lazy-allocation的核心思想"><a href="#2-lazy-allocation的核心思想" class="headerlink" title="2.lazy allocation的核心思想"></a>2.<code>lazy allocation</code>的核心思想</h3><p><code>lazy allocation</code>核心思想非常简单，<code>sbrk</code>系统调基本上不做任何事情，唯一需要做的事情就是提升<code>p-&gt;sz</code>，将<code>p-&gt;sz</code>增加<code>n</code>，其中<code>n</code>是需要新分配的字节数。但是内核在这个时间点<strong>并不会分配任何物理内存</strong>。之后在某个时间点，应用程序使用到了新申请的那部分内存，这时会触发<code>page fault</code>，因为我们还没有将新的内存映射到<code>page table</code>。所以，如果我们解析一个大于旧的<code>p-&gt;sz</code>，但是又小于新的<code>p-&gt;sz</code>（注，也就是旧的<code>p-&gt;sz + n</code>）的虚拟地址，我们希望内核能够分配一个内存<code>page</code>，并且重新执行指令。</p>
+<p>所以，当我们看到了一个<code>page fault</code>，相应的虚拟地址小于当前<code>p-&gt;sz</code>，同时大于<code>stack</code>，那么我们就知道这是一个来自于<code>heap</code>的地址，但是内核还没有分配任何物理内存。所以对于这个<code>page fault</code>的响应也理所当然的直接明了：在<code>page fault handler</code>中，通过<code>kalloc</code>函数分配一个内存<code>page</code>；初始化这个<code>page</code>内容为0；将这个内存<code>page</code>映射到<code>user page table</code>中；最后重新执行指令。比方说，如果是<code>load</code>指令，或者<code>store</code>指令要访问属于当前进程但是还未被分配的内存，在我们映射完新申请的物理内存page之后，重新执行指令应该就能通过了。</p>
+<h2 id="二、如何实现lazy-allocation"><a href="#二、如何实现lazy-allocation" class="headerlink" title="二、如何实现lazy allocation?"></a>二、如何实现<code>lazy allocation</code>?</h2><p><code>lazy allocation</code>的核心思想简单易懂，我们根据思想对<code>sbrk</code>函数进行修改即可.<strong>注意：<code>sbrk</code>函数不仅用于增加物理内存，也用于减少物理内存</strong></p>
+<h3 id="1-先分析sbrk函数原本的功能，再做修改"><a href="#1-先分析sbrk函数原本的功能，再做修改" class="headerlink" title="1.先分析sbrk函数原本的功能，再做修改"></a>1.先分析<code>sbrk</code>函数原本的功能，再做修改</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">uint64</span><br><span class="line"><span class="title function_">sys_sbrk</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">int</span> addr;</span><br><span class="line">  <span class="type">int</span> n;</span><br><span class="line">  <span class="comment">//n为想要增加或减少的字节数</span></span><br><span class="line">  <span class="comment">//addr为p-&gt;sz 所指的地址</span></span><br><span class="line">  <span class="keyword">if</span>(argint(<span class="number">0</span>, &amp;n) &lt; <span class="number">0</span>)</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">  addr = myproc()-&gt;sz;</span><br><span class="line">  <span class="keyword">if</span>(growproc(n) &lt; <span class="number">0</span>)</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">  <span class="keyword">return</span> addr;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Grow or shrink user memory by n bytes.</span></span><br><span class="line"><span class="comment">// Return 0 on success, -1 on failure.</span></span><br><span class="line"><span class="type">int</span></span><br><span class="line"><span class="title function_">growproc</span><span class="params">(<span class="type">int</span> n)</span></span><br><span class="line">&#123;</span><br><span class="line">  uint sz;</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">proc</span> *<span class="title">p</span> =</span> myproc();</span><br><span class="line"></span><br><span class="line">  sz = p-&gt;sz;</span><br><span class="line">  <span class="keyword">if</span>(n &gt; <span class="number">0</span>)&#123;</span><br><span class="line">    <span class="comment">//立马分配n个字节给进程(eager allocation)</span></span><br><span class="line">    <span class="keyword">if</span>((sz = uvmalloc(p-&gt;pagetable, sz, sz + n)) == <span class="number">0</span>) &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span>(n &lt; <span class="number">0</span>)&#123;</span><br><span class="line">    <span class="comment">//减少字节数</span></span><br><span class="line">    sz = uvmdealloc(p-&gt;pagetable, sz, sz + n);</span><br><span class="line">  &#125;</span><br><span class="line">  p-&gt;sz = sz;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看出来<code>sbrk</code>函数原本根据n的正负值来立刻分配或立刻减少n个字节给进程</p>
+<p>根据<code>lazy allcation</code>的思想，我们在进程要求新增物理内存大小的时候只增加<code>p-&gt;sz</code>的值，如何操作看下一节，我们还需要思考，<strong><code>lazy allocation</code>的思想是否可以用于减少物理内存的大小？</strong></p>
+<p>答案是不可以：因为我们是通过<code>page fault</code>会进入<code>usertrap</code>函数这一机制，在进程实际需要使用到内存的时候为其分配物理内存。</p>
+<p>倘若n值为复数，<strong>我们仅仅将<code>p-sz</code>的值减少而不去释放物理内存，那么当进程访问本不应该存在的物理地址时，不会发生<code>page fault</code>，</strong></p>
+<p>**进而程序使用了本不应该使用的物理内存，而操作系统却没有报错。**所以我们对n值为负数时，立刻释放物理内存的操作不做修改。</p>
+<p>修改后的<code>sbrk</code>函数如下(为了避免对<code>growproc</code>函数的修改，将n值正负如何进行处理的代码选择放在了<code>sbrk</code>函数中)：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">uint64</span><br><span class="line"><span class="title function_">sys_sbrk</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">int</span> addr;</span><br><span class="line">  <span class="type">int</span> n;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span>(argint(<span class="number">0</span>, &amp;n) &lt; <span class="number">0</span>)</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line"></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">proc</span>* <span class="title">p</span> =</span> myproc();</span><br><span class="line">  addr = p-&gt;sz;</span><br><span class="line">  uint64 sz = p-&gt;sz;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span>(n &gt; <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="comment">// lazy allocation 仅增加p-&gt;sz的大小，并不实际分配物理内存</span></span><br><span class="line">    p-&gt;sz += n;</span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span>(sz + n &gt; <span class="number">0</span>) &#123;</span><br><span class="line">  	<span class="comment">// 减少n字节</span></span><br><span class="line">    sz = uvmdealloc(p-&gt;pagetable, sz, sz + n);</span><br><span class="line">    p-&gt;sz = sz;</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">  	<span class="comment">// 减少n字节，p-sz 大小小于0，说明减少的字节太多，发生错误。</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> addr;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-在usertrap中增加对page-fault的处理"><a href="#2-在usertrap中增加对page-fault的处理" class="headerlink" title="2.在usertrap中增加对page fault的处理"></a>2.在<code>usertrap</code>中增加对<code>page fault</code>的处理</h3><h4 id="2-1-trap流程与systemcall调用流程的区别"><a href="#2-1-trap流程与systemcall调用流程的区别" class="headerlink" title="2.1 trap流程与systemcall调用流程的区别"></a>2.1 <code>trap</code>流程与<code>systemcall</code>调用流程的区别</h4><p>这里的 <code>trap</code>流程与<code>systemcall</code>类似，不同于<code>systemcall</code>的是，在进入内核态后，<code>r_scause()</code>值不同，原本的</p>
+<img src="/4fd45b61/%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8%E5%8F%B7.png" class="" title="image-20240506213106166">
+
+
+
+<p>xv6系统，虽然<code>scause</code>会根据不同的<code>trap</code>赋予不同的值，但实际上的<code>usertrap</code>函数中只有处理<code>scause</code>值为8（系统调用）的代码，我们需要在<code>usertrap</code>函数中自行添加对<code>page fault</code>的处理。</p>
+<p>我们可以根据图片看出来<code>xv6</code>系统会根据不同的<code>page fault</code>生成三种不同的数值：12(因为指令执行引起的<code>page fault</code>)、13(因为load–读操作引起的<code>page fault</code>)、15(是因为store–写操作引起的<code>page fault</code>)</p>
+<p>由于本身的xv6系统不存在实际上的<code>scause</code>为其他值的情况，我们<strong>可以认为所有<code>scause</code>值为其他值的情况都是由于我们的修改引起的</strong>。我们可以用<code>print</code>函数将<code>scause</code>值打印出来调试错误，实际上后续的实验过程中，由于<code>lazy allocation</code>引起的<code>scause</code>只有13或15两种值。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// handle an interrupt, exception, or system call from user space.</span></span><br><span class="line"><span class="comment">// called from trampoline.S</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="type">void</span></span><br><span class="line"><span class="title function_">usertrap</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">  ....</span><br><span class="line">  ....</span><br><span class="line">  <span class="comment">// system call    </span></span><br><span class="line">  <span class="keyword">if</span>(r_scause() == <span class="number">8</span>)&#123;</span><br><span class="line">    </span><br><span class="line">    ...  </span><br><span class="line">      </span><br><span class="line">  &#125; <span class="comment">//page fault</span></span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span>(r_scause() == <span class="number">15</span>||r_scause() == <span class="number">13</span>)&#123;</span><br><span class="line">    ...</span><br><span class="line">    ...</span><br><span class="line">  &#125; </span><br><span class="line">    ...</span><br><span class="line">    ...</span><br><span class="line">  usertrapret();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="2-2-发生page-fault的虚拟地址范围"><a href="#2-2-发生page-fault的虚拟地址范围" class="headerlink" title="2.2 发生page fault的虚拟地址范围"></a>2.2 发生<code>page fault</code>的虚拟地址范围</h4><p>这样我们在<code>usertrap</code>函数中可以通过<code>r_stval</code>得知发生<code>page fault</code>的虚拟地址</p>
+<p><code>xv6</code>中虚拟地址的范围在<code>0-MAXVA</code>之间，所以超出这个范围的<code>sepc</code>值属于严重的错误，我们应该将进程杀死，而不是对待<code>page fault</code>的方式对其进行处理。<code>lazy allocation</code>政策下发生<code>page fault</code>的情况是错以为有内存的情况下进行读写操作，所以<strong>发生<code>page fault</code>的虚拟地址应该小于进程认为自己拥有的字节大小（<code>p-&gt;sz</code>）</strong></p>
+<p>其次，目前的<code>lazy allocation</code>仅在需要增加字节的时候使用，所以<strong>发生<code>page fault</code>的虚拟地址应该大于栈指针</strong>（<code>p-&gt;trapframe-&gt;sp</code>）<em>（xv6最初的进程为栈分配了PGSIZE的值，后续的进程都是初始进程fork出来的，意味着所有进程都具有PGSIZE大小的栈，那么我们<code>lazy allocation</code>的地址一定是大于栈指针的）</em>。</p>
+<p>所以，<strong>综合考虑下</strong>我们检测发生<code>page fault</code>的范围应该是<code>p-&gt;trapframe-&gt;sp   -   p-&gt;sz</code></p>
+<h4 id="2-3-分配物理内存并进行映射"><a href="#2-3-分配物理内存并进行映射" class="headerlink" title="2.3 分配物理内存并进行映射"></a>2.3 分配物理内存并进行映射</h4><p>在判断发生虚拟地址的正确性后，我们需要做的就是为其分配物理地址并映射，应该注意的是当物理内存不足后，我们直接杀死了进程。其余更高级的系统会采用更加灵活的方式：</p>
+<p>最终的代码应该是</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//kernel/trap.c/usertrap函数中</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">else</span> <span class="keyword">if</span>(r_scause() == <span class="number">15</span>||r_scause() == <span class="number">13</span>)&#123;<span class="comment">//page fault</span></span><br><span class="line">    <span class="comment">// printf(&quot;it is page fault\n&quot;);</span></span><br><span class="line">    <span class="comment">// printf(&quot;usertrap(): unexpected scause %p pid=%d\n&quot;, r_scause(), p-&gt;pid);</span></span><br><span class="line">    <span class="comment">// printf(&quot;            sepc=%p stval=%p\n&quot;, r_sepc(), r_stval());</span></span><br><span class="line">    <span class="comment">//stval寄存器中保存了造成页面错误的虚拟地址</span></span><br><span class="line">    uint64 va=r_stval();</span><br><span class="line">    <span class="comment">//如果某个进程在高于sbrk()分配的任何虚拟内存地址上出现页错误，则终止该进程。</span></span><br><span class="line">    <span class="comment">//page guard</span></span><br><span class="line">    <span class="keyword">if</span>(PGROUNDUP(p-&gt;trapframe-&gt;sp) - <span class="number">1</span> &gt;= va )&#123;</span><br><span class="line">        p-&gt;killed=<span class="number">1</span>;</span><br><span class="line">    &#125;<span class="keyword">else</span> <span class="keyword">if</span>(va&gt;p-&gt;sz)&#123;</span><br><span class="line">      p-&gt;killed=<span class="number">1</span>;</span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">      uint64* ka=kalloc();</span><br><span class="line">      <span class="keyword">if</span>(ka==<span class="number">0</span>)&#123;</span><br><span class="line">        <span class="comment">//printf(&quot;out of memory\n&quot;);</span></span><br><span class="line">        p-&gt;killed=<span class="number">1</span>;</span><br><span class="line">      &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">          <span class="comment">//填空垃圾数据</span></span><br><span class="line">          <span class="built_in">memset</span>((<span class="type">void</span> *)ka, <span class="number">0</span>, PGSIZE);</span><br><span class="line">          <span class="keyword">if</span>(mappages(p-&gt;pagetable, PGROUNDDOWN(va), PGSIZE, (uint64)ka, PTE_W|PTE_X|PTE_R|PTE_U) != <span class="number">0</span>)&#123;</span><br><span class="line">            kfree((<span class="type">void</span> *)ka);</span><br><span class="line">            p-&gt;killed=<span class="number">1</span>;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;  </span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="三、惰性分配一定优于积极分配-eager-allocation-吗？"><a href="#三、惰性分配一定优于积极分配-eager-allocation-吗？" class="headerlink" title="三、惰性分配一定优于积极分配(eager allocation)吗？"></a>三、惰性分配一定优于积极分配<code>(eager allocation)</code>吗？</h2><p>​	惰性分配策略并不一定优于积极分配策略。两种策略各有优缺点，适用于不同的场景和需求。积极分配策略直接为进程分配内存，简单直接，适合对内存需求较为明确的情况，可以提高系统的响应速度。而惰性分配策略则可以节省内存资源，只在实际需要时进行分配，适用于内存需求不确定或者资源有限的情况下，可以降低内存的浪费。因此，选择哪种分配策略取决于具体的应用场景和需求，没有一种策略绝对优于另一种策略。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/MIT6-S081/" rel="tag"># MIT6.S081</a>
+              <a href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" rel="tag"># 操作系统</a>
+              <a href="/tags/page/" rel="tag"># page</a>
+              <a href="/tags/%E5%9C%B0%E5%9D%80%E6%98%A0%E5%B0%84/" rel="tag"># 地址映射</a>
+              <a href="/tags/lazy/" rel="tag"># lazy</a>
+              <a href="/tags/allocation/" rel="tag"># allocation</a>
+              <a href="/tags/%E6%83%B0%E6%80%A7%E5%88%86%E9%85%8D/" rel="tag"># 惰性分配</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/932c8df1.html" rel="prev" title="MIT6.S081中Systemcall的调用流程">
+      <i class="fa fa-chevron-left"></i> MIT6.S081中Systemcall的调用流程
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/a33744ac.html" rel="next" title="MIT6.S081_2020_Lab6:init-starting-sh-bug-原因分析">
+      MIT6.S081_2020_Lab6:init-starting-sh-bug-原因分析 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E4%BB%80%E4%B9%88%E6%98%AF%E6%83%B0%E6%80%A7%E5%88%86%E9%85%8D%EF%BC%88lazy-page-allocation%EF%BC%89%EF%BC%9F"><span class="nav-number">1.</span> <span class="nav-text">一、什么是惰性分配（lazy page allocation）？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-eager-allocation"><span class="nav-number">1.1.</span> <span class="nav-text">1.eager allocation</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-lazy-allocation%E7%9A%84%E6%A0%B8%E5%BF%83%E6%80%9D%E6%83%B3"><span class="nav-number">1.2.</span> <span class="nav-text">2.lazy allocation的核心思想</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0lazy-allocation"><span class="nav-number">2.</span> <span class="nav-text">二、如何实现lazy allocation?</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%85%88%E5%88%86%E6%9E%90sbrk%E5%87%BD%E6%95%B0%E5%8E%9F%E6%9C%AC%E7%9A%84%E5%8A%9F%E8%83%BD%EF%BC%8C%E5%86%8D%E5%81%9A%E4%BF%AE%E6%94%B9"><span class="nav-number">2.1.</span> <span class="nav-text">1.先分析sbrk函数原本的功能，再做修改</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%9C%A8usertrap%E4%B8%AD%E5%A2%9E%E5%8A%A0%E5%AF%B9page-fault%E7%9A%84%E5%A4%84%E7%90%86"><span class="nav-number">2.2.</span> <span class="nav-text">2.在usertrap中增加对page fault的处理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-trap%E6%B5%81%E7%A8%8B%E4%B8%8Esystemcall%E8%B0%83%E7%94%A8%E6%B5%81%E7%A8%8B%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="nav-number">2.2.1.</span> <span class="nav-text">2.1 trap流程与systemcall调用流程的区别</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-%E5%8F%91%E7%94%9Fpage-fault%E7%9A%84%E8%99%9A%E6%8B%9F%E5%9C%B0%E5%9D%80%E8%8C%83%E5%9B%B4"><span class="nav-number">2.2.2.</span> <span class="nav-text">2.2 发生page fault的虚拟地址范围</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-3-%E5%88%86%E9%85%8D%E7%89%A9%E7%90%86%E5%86%85%E5%AD%98%E5%B9%B6%E8%BF%9B%E8%A1%8C%E6%98%A0%E5%B0%84"><span class="nav-number">2.2.3.</span> <span class="nav-text">2.3 分配物理内存并进行映射</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E6%83%B0%E6%80%A7%E5%88%86%E9%85%8D%E4%B8%80%E5%AE%9A%E4%BC%98%E4%BA%8E%E7%A7%AF%E6%9E%81%E5%88%86%E9%85%8D-eager-allocation-%E5%90%97%EF%BC%9F"><span class="nav-number">3.</span> <span class="nav-text">三、惰性分配一定优于积极分配(eager allocation)吗？</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">水更流</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">21</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">36</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/0shuigengliu" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;0shuigengliu" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://space.bilibili.com/289595050" title="bilibili → https:&#x2F;&#x2F;space.bilibili.com&#x2F;289595050" rel="noopener" target="_blank"><i class="fa fa-fw fa-bilibili"></i>bilibili</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">水更流</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+<div class="powered-by">
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <i class="fa fa-user-md"></i>
+    <span id="busuanzi_container_site_uv">
+        本站访客数:<span id="busuanzi_value_site_uv"></span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span id="busuanzi_container_site_pv">
+        本站访问量<span id="busuanzi_value_site_pv"></span>
+    </span>
+</div>
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 8.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.shui2000.top","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="在准备机试的时候(2025年03月14日),遇到这道题，第一次没想出来解答，于是查看了官方的解法。本人想举一反三，将代码进行修改，却发现了原解没遇见的边界问题。，现分析为什么原代码可以，现在的代码不行 原题题目链接已知一个长度为 n 的数组，预先按照升序排列，经由 1 到 n 次 旋转 后，得到输入数组。例如，原数组 nums &#x3D; [0,1,2,4,5,6,7] 在变化后可能得到：  若旋转 4">
+<meta property="og:type" content="article">
+<meta property="og:title" content="二分查找的边界问题">
+<meta property="og:url" content="https://www.shui2000.top/825ec99a.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="在准备机试的时候(2025年03月14日),遇到这道题，第一次没想出来解答，于是查看了官方的解法。本人想举一反三，将代码进行修改，却发现了原解没遇见的边界问题。，现分析为什么原代码可以，现在的代码不行 原题题目链接已知一个长度为 n 的数组，预先按照升序排列，经由 1 到 n 次 旋转 后，得到输入数组。例如，原数组 nums &#x3D; [0,1,2,4,5,6,7] 在变化后可能得到：  若旋转 4">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.shui2000.top/825ec99a/%E6%80%9D%E8%B7%AF1.png">
+<meta property="og:image" content="https://www.shui2000.top/825ec99a/%E6%80%9D%E8%B7%AF2.png">
+<meta property="og:image" content="https://www.shui2000.top/825ec99a/%E6%80%9D%E8%B7%AF3.png">
+<meta property="og:image" content="https://www.shui2000.top/825ec99a/%E4%B8%A4%E7%A7%8D%E5%88%9D%E5%A7%8B%E7%8A%B6%E6%80%81.jpg">
+<meta property="og:image" content="https://www.shui2000.top/825ec99a/%E6%AF%94%E8%BE%831.jpg">
+<meta property="og:image" content="https://www.shui2000.top/825ec99a/%E6%AF%94%E8%BE%832.jpg">
+<meta property="og:image" content="https://www.shui2000.top/825ec99a/%E6%AF%94%E8%BE%833.jpg">
+<meta property="og:image" content="https://www.shui2000.top/825ec99a/file-20250315135716861.jpg">
+<meta property="og:image" content="https://www.shui2000.top/825ec99a/%E5%81%87%E6%83%B3%E7%9A%84%E6%83%85%E5%86%B5%E5%8F%98%E5%8C%96%EF%BC%9A.jpg">
+<meta property="og:image" content="https://www.shui2000.top/825ec99a/%E5%AF%BB%E6%89%BE%E6%9C%80%E5%A4%A7%E5%80%BC.jpg">
+<meta property="og:image" content="https://www.shui2000.top/825ec99a/%E6%9C%80%E5%A4%A7%E5%80%BC-right.jpg">
+<meta property="og:image" content="https://www.shui2000.top/825ec99a/%E6%9C%80%E5%A4%A7%E5%80%BC-right2.jpg">
+<meta property="og:image" content="https://www.shui2000.top/825ec99a/%E8%BE%93%E5%87%BA%E7%BB%93%E6%9E%9C%E8%B6%85%E6%97%B6.png">
+<meta property="og:image" content="https://www.shui2000.top/825ec99a/%E8%BE%93%E5%87%BA%E7%BB%93%E6%9E%9C2.png">
+<meta property="og:image" content="https://www.shui2000.top/825ec99a/%E8%A1%A8%E6%83%85%E5%8C%851.png">
+<meta property="article:published_time" content="2025-03-14T04:32:30.000Z">
+<meta property="article:modified_time" content="2026-07-08T16:55:35.106Z">
+<meta property="article:author" content="水更流">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="二分查找">
+<meta property="article:tag" content="算法">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.shui2000.top/825ec99a/%E6%80%9D%E8%B7%AF1.png">
+
+<link rel="canonical" href="https://www.shui2000.top/825ec99a.html">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>二分查找的边界问题 | Hexo</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Hexo</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.shui2000.top/825ec99a.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="水更流">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hexo">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          二分查找的边界问题
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2025-03-14 12:32:30" itemprop="dateCreated datePublished" datetime="2025-03-14T12:32:30+08:00">2025-03-14</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2026-07-09 00:55:35" itemprop="dateModified" datetime="2026-07-09T00:55:35+08:00">2026-07-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%AE%97%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">算法</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在准备机试的时候(2025年03月14日),遇到这道题，第一次没想出来解答，于是查看了官方的解法。<strong>本人想举一反三，将代码进行修改，却发现了原解没遇见的边界问题。</strong>，现分析为什么原代码可以，现在的代码不行</p>
+<h2 id="原题"><a href="#原题" class="headerlink" title="原题"></a>原题</h2><h3 id="题目链接"><a href="#题目链接" class="headerlink" title="题目链接"></a><a target="_blank" rel="noopener" href="https://leetcode.cn/problems/find-minimum-in-rotated-sorted-array/">题目链接</a></h3><p>已知一个长度为 <code>n</code> 的数组，预先按照升序排列，经由 <code>1</code> 到 <code>n</code> 次 <strong>旋转</strong> 后，得到输入数组。例如，原数组 <code>nums = [0,1,2,4,5,6,7]</code> 在变化后可能得到：</p>
+<ul>
+<li>若旋转 <code>4</code> 次，则可以得到 <code>[4,5,6,7,0,1,2]</code></li>
+<li>若旋转 <code>7</code> 次，则可以得到 <code>[0,1,2,4,5,6,7]</code></li>
+</ul>
+<p>注意，数组 <code>[a[0], a[1], a[2], ..., a[n-1]]</code> <strong>旋转一次</strong> 的结果为数组 <code>[a[n-1], a[0], a[1], a[2], ..., a[n-2]]</code> 。</p>
+<p>给你一个元素值 <strong>互不相同</strong> 的数组 <code>nums</code> ，它原来是一个升序排列的数组，并按上述情形进行了多次旋转。请你找出并返回数组中的 <strong>最小元素</strong> 。</p>
+<p>你必须设计一个时间复杂度为 <code>O(log n)</code> 的算法解决此问题。</p>
+<h3 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h3><p>本体的思路我学习的<a target="_blank" rel="noopener" href="https://leetcode.cn/problems/find-minimum-in-rotated-sorted-array/solutions/698479/xun-zhao-xuan-zhuan-pai-xu-shu-zu-zhong-5irwp">官方题解</a>，思路也搬运过来</p>
+<p><strong>方法：二分查找</strong></p>
+<p><strong>思路与算法</strong></p>
+<p>一个不包含重复元素的升序数组在经过旋转之后，可以得到下面可视化的折线图：</p>
+<img src="/825ec99a/%E6%80%9D%E8%B7%AF1.png" class="">
+
+<p>其中横轴表示数组元素的下标，纵轴表示数组元素的值。图中标出了最小值的位置，是我们需要查找的目标。</p>
+<p>我们考虑<strong>数组中的最后一个元素 x</strong>：在最小值右侧的元素（不包括最后一个元素本身），它们的值一定都严格小于 x；而在最小值左侧的元素，它们的值一定都严格大于 x。因此，我们可以根据这一条性质，通过二分查找的方法找出最小值。</p>
+<p>在二分查找的每一步中，左边界为 low，右边界为 high，区间的中点为 pivot，最小值就在该区间内。我们将中轴元素<code> nums[pivot]</code> 与右边界元素 <code>nums[high] </code>进行比较，可能会有以下的三种情况：</p>
+<p>第一种情况是 <code>nums[pivot]&lt;nums[high]。</code>如下图所示，这说明 <code>nums[pivot]</code> 是最小值右侧的元素，因此我们可以忽略二分查找区间的右半部分。</p>
+<img src="/825ec99a/%E6%80%9D%E8%B7%AF2.png" class="">
+
+<p>第二种情况是 <code>nums[pivot]&gt;nums[high]</code>。如下图所示，这说明 <code>nums[pivot] </code>是最小值左侧的元素，因此我们可以忽略二分查找区间的左半部分。</p>
+<img src="/825ec99a/%E6%80%9D%E8%B7%AF3.png" class="">
+
+<p>由于数组不包含重复元素，并且只要当前的区间长度不为 1，pivot 就不会与 high 重合；而如果当前的区间长度为 1，这说明我们已经可以结束二分查找了。<strong>因此不会存在 <code>nums[pivot]=nums[high] </code></strong> 的情况。</p>
+<p>当二分查找结束时，我们就得到了最小值所在的位置。</p>
+<h3 id="答案"><a href="#答案" class="headerlink" title="答案"></a>答案</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">findMin</span><span class="params">(vector &lt; <span class="type">int</span> &gt; &amp; nums)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> left = <span class="number">0</span>;</span><br><span class="line">    <span class="type">int</span> right = nums.<span class="built_in">size</span>() - <span class="number">1</span>;</span><br><span class="line">    <span class="type">int</span> mid = <span class="number">0</span>;</span><br><span class="line">    <span class="comment">//中止条件为left&lt;right，则循环结束后left=right</span></span><br><span class="line">    <span class="keyword">while</span> (left &lt; right) &#123;</span><br><span class="line">        mid = (left + right) / <span class="number">2</span>;</span><br><span class="line">        <span class="keyword">if</span> (nums[mid] &gt; nums[right]) &#123;</span><br><span class="line">            <span class="comment">//mid 一定在最小值的左侧</span></span><br><span class="line">            left = mid + <span class="number">1</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">//注意right与left的处理并不一致。</span></span><br><span class="line">            <span class="comment">//此时的mid可能是最终结果，所以不能直接用mid-1</span></span><br><span class="line">            right = mid;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> nums[left];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="为什么不与num-left-比较"><a href="#为什么不与num-left-比较" class="headerlink" title="为什么不与num[left]比较"></a>为什么不与<code>num[left]</code>比较</h2><p> 我将本题的代码修改，发现会碰见代码出现错误的问题。<strong>而我做的，只是将比较<code>num[right]</code>元素改为比较<code>num[left]</code>元素</strong><br> 代码如下</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">findMin</span><span class="params">(vector &lt; <span class="type">int</span> &gt; &amp; nums)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> left = <span class="number">0</span>;</span><br><span class="line">    <span class="type">int</span> right = nums.<span class="built_in">size</span>() - <span class="number">1</span>;</span><br><span class="line">    <span class="type">int</span> mid = (left + right) / <span class="number">2</span>;</span><br><span class="line">    <span class="keyword">while</span> (left &lt; right) &#123;</span><br><span class="line">        mid = (left + right) / <span class="number">2</span>;</span><br><span class="line">        <span class="keyword">if</span> (nums[mid] &gt;= nums[left]) &#123;</span><br><span class="line">            left = mid + <span class="number">1</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            right = mid;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> nums[left];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>发现代码运行出错，经过分析，虽然<code>nums[left]</code>与<code>nums[right]</code>只差了一个数，但是用同样的思路是完全不同的结果</p>
+<h3 id="令人迷惑的表象"><a href="#令人迷惑的表象" class="headerlink" title="令人迷惑的表象"></a>令人迷惑的表象</h3><p>我需要对官方题解做下补充：<br>实际上，数组的初始状态有两种：</p>
+<img src="/825ec99a/%E4%B8%A4%E7%A7%8D%E5%88%9D%E5%A7%8B%E7%8A%B6%E6%80%81.jpg" class="">
+<p>但题解对三种情况的处理是没有问题的(pivot对应mid，high对应right，low对应left)（懒得重画图了）:</p>
+<ul>
+<li><code>nums[mid]&lt;nums[right]</code>与<code>nums[mid]&lt;nums[left]</code></li>
+</ul>
+<img src="/825ec99a/%E6%AF%94%E8%BE%831.jpg" class="">
+<ul>
+<li><code>nums[mid]==nums[right]</code>与<code>nums[mid]==nums[left]</code></li>
+</ul>
+<img src="/825ec99a/%E6%AF%94%E8%BE%832.jpg" class="">
+<ul>
+<li><code>nums[mid]&gt;nums[right]</code>与<code>nums[mid]&gt;nums[left]</code></li>
+</ul>
+<img src="/825ec99a/%E6%AF%94%E8%BE%833.jpg" class="">
+<p>与<code>nums[left]</code>进行比较<strong>似乎</strong>与<code>nums[right]</code><strong>一致</strong>，三种情况，可以<strong>各自确定mid目前和ans的相对前后关系</strong></p>
+<h3 id="为什么会出错？"><a href="#为什么会出错？" class="headerlink" title="为什么会出错？"></a>为什么会出错？</h3><p>着重观察<br><code>nums[mid]&gt;nums[left]</code><br>会发现，在不同的情况下，<strong>mid相对于ans的位置前后关系不同</strong>，并且情况一在一次次递归后可能变为情况2，如图所示：</p>
+<img src="/825ec99a/file-20250315135716861.jpg" class="">
+<p><strong>与<code>nums[left]</code>进行比较要处理这种mid与ans前后关系发生变化，逻辑处理不如直接与<code>nums[right]</code>进行比较来的方便。</strong></p>
+<h3 id="发散思维"><a href="#发散思维" class="headerlink" title="发散思维"></a>发散思维</h3><p>在分析出错原因时，我们指出left，ans，mid，right的相对关系会发生变化，那么存不存在一种可能，使出现下图的变化？：</p>
+<img src="/825ec99a/%E5%81%87%E6%83%B3%E7%9A%84%E6%83%85%E5%86%B5%E5%8F%98%E5%8C%96%EF%BC%9A.jpg" class="">
+<p><strong>结论：不可能</strong><br>以下是分析：<br>分析需要借助代码来分析，</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (nums[mid] &gt; nums[right]) &#123;</span><br><span class="line">    left = mid + <span class="number">1</span>;</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    right = mid;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>变更<code>right</code>条件的是<code>nums[mid]&lt;=nums[right]</code>,之前分析可知，由于数组中没有重复的元素，所以在<code>left==right</code>（即循环结束）前，mid一直是不会与right相等的，所以只有<code>nums[mid]&lt;nums[right]</code>时，<code>right</code>才会发生变化，而到达<strong>情况2便是极限了</strong>，因为直接结束<code>nums[mid]&lt;nums[right]</code>的情况都不会再出现了</p>
+<h2 id="寻找最大值怎么办（还有坑）？"><a href="#寻找最大值怎么办（还有坑）？" class="headerlink" title="寻找最大值怎么办（还有坑）？"></a>寻找最大值怎么办（还有坑）？</h2><h3 id="按照相同的思路分析问题"><a href="#按照相同的思路分析问题" class="headerlink" title="按照相同的思路分析问题"></a>按照相同的思路分析问题</h3><h4 id="与nums-left-比较"><a href="#与nums-left-比较" class="headerlink" title="与nums[left]比较"></a>与<code>nums[left]</code>比较</h4><p>三种情况下，ans与mid的相对情况只有一种</p>
+<img src="/825ec99a/%E5%AF%BB%E6%89%BE%E6%9C%80%E5%A4%A7%E5%80%BC.jpg" class="">
+<h4 id="与nums-right-比较"><a href="#与nums-right-比较" class="headerlink" title="与nums[right]比较"></a>与<code>nums[right]</code>比较</h4><p>我们发现在<code>nums[mid]&lt;nums[right]</code>时，<code>ans与mid</code>有<strong>两种相对位置</strong></p>
+<img src="/825ec99a/%E6%9C%80%E5%A4%A7%E5%80%BC-right.jpg" class="">
+<p>理所应该，以下情况是可能出现的</p>
+<img src="/825ec99a/%E6%9C%80%E5%A4%A7%E5%80%BC-right2.jpg" class="">
+<p>所以，<strong>找最小值时为什么不用left和找最大值为什么不用right的原因是相同的：可能一种情况需要处理两套相对关系</strong></p>
+<h3 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">findpeek</span><span class="params">(vector &lt; <span class="type">int</span> &gt; &amp; nums)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> l = <span class="number">0</span>;</span><br><span class="line">    <span class="type">int</span> r = nums.<span class="built_in">size</span>() - <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">while</span> (l &lt; r) &#123;</span><br><span class="line">        <span class="type">int</span> mid = (l + r) / <span class="number">2</span>;</span><br><span class="line">        <span class="keyword">if</span> (nums[mid] &lt; nums[l]) &#123;</span><br><span class="line">            r = mid - <span class="number">1</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            l = mid;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> nums[l];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>似乎我们使用<code>num[left]</code>就完事大吉了，但实际应用不是这样的。</p>
+<h3 id="测试结果"><a href="#测试结果" class="headerlink" title="测试结果"></a>测试结果</h3><p>测试发现大部分代码可以通过，但是存在一个<strong>测试案例超时</strong></p>
+<img src="/825ec99a/%E8%BE%93%E5%87%BA%E7%BB%93%E6%9E%9C%E8%B6%85%E6%97%B6.png" class="">
+<p>奇怪的是,使用<code>findMin</code>代码寻找最小值，却可以得出正确的结果</p>
+<img src="/825ec99a/%E8%BE%93%E5%87%BA%E7%BB%93%E6%9E%9C2.png" class="">
+<p>经过分析，我们发现，<br><code>mid=(left+right)/2</code>的公式mid边界情况有些特殊，不能想当然。二者之和不为偶数，那么mid值会<strong>偏左</strong>，导致：</p>
+<ul>
+<li><strong>只有数组长度不为1时，<code>mid==right</code>不可能</strong></li>
+<li><strong>但是数组长度不为1时,<code>mid==left</code>是可能的。</strong> <strong>长度还有可能为2</strong> <code>mid=(left+right)/2=left+(right-left)/2</code>,如果长度大于2，<code>mid也一定不等于left</code></li>
+</ul>
+<h3 id="解决方法"><a href="#解决方法" class="headerlink" title="解决方法"></a>解决方法</h3><h4 id="一、将寻找最小值的结果修改一下"><a href="#一、将寻找最小值的结果修改一下" class="headerlink" title="一、将寻找最小值的结果修改一下"></a>一、将寻找最小值的结果修改一下</h4><p>既然寻找最大值的坑这么多，我们可以先寻找一个最小值：</p>
+<ul>
+<li>若最小值下标为0，最大值即为最后一个元素，</li>
+<li>若最小值下标i不为0，最大值即为<code>nums[i-1]</code></li>
+</ul>
+<img src="/825ec99a/%E8%A1%A8%E6%83%85%E5%8C%851.png" class="">
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">findpeek</span><span class="params">(vector &lt; <span class="type">int</span> &gt; nums)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> i = <span class="built_in">findmin</span>(nums);</span><br><span class="line">    <span class="keyword">if</span> (i == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> nums.<span class="built_in">size</span>() - <span class="number">1</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> i - <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="二、增加数组长度不为1时，mid-left的判断"><a href="#二、增加数组长度不为1时，mid-left的判断" class="headerlink" title="二、增加数组长度不为1时，mid==left的判断"></a>二、增加数组长度不为1时，<code>mid==left</code>的判断</h4><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">findpeek</span><span class="params">(vector &lt; <span class="type">int</span> &gt; &amp; nums)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> l = <span class="number">0</span>;</span><br><span class="line">    <span class="type">int</span> r = nums.<span class="built_in">size</span>() - <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">while</span> (l &lt; r) &#123;</span><br><span class="line">        <span class="type">int</span> mid = (l + r) / <span class="number">2</span>;</span><br><span class="line">        <span class="keyword">if</span> (nums[mid] &lt; nums[l]) &#123;</span><br><span class="line">            r = mid - <span class="number">1</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (nums[mid] == nums[l]) &#123;</span><br><span class="line">			<span class="comment">//l==r时，循环终止，所以此时数组长度一定大于1</span></span><br><span class="line">			<span class="comment">//由于此时长度最大为2，所以长度只能为2</span></span><br><span class="line">			<span class="keyword">return</span> nums[l]&gt;nums[r]?nums[l]:nums[r];</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            l = mid;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> nums[l];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"># C++</a>
+              <a href="/tags/%E4%BA%8C%E5%88%86%E6%9F%A5%E6%89%BE/" rel="tag"># 二分查找</a>
+              <a href="/tags/%E7%AE%97%E6%B3%95/" rel="tag"># 算法</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/f1a64171.html" rel="prev" title="二叉树的前中后三序遍历">
+      <i class="fa fa-chevron-left"></i> 二叉树的前中后三序遍历
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/34c45c83.html" rel="next" title="这个分类下的文章都是做什么的？">
+      这个分类下的文章都是做什么的？ <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8E%9F%E9%A2%98"><span class="nav-number">1.</span> <span class="nav-text">原题</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A2%98%E7%9B%AE%E9%93%BE%E6%8E%A5"><span class="nav-number">1.1.</span> <span class="nav-text">题目链接</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%9D%E8%B7%AF"><span class="nav-number">1.2.</span> <span class="nav-text">思路</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AD%94%E6%A1%88"><span class="nav-number">1.3.</span> <span class="nav-text">答案</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E4%B8%8Enum-left-%E6%AF%94%E8%BE%83"><span class="nav-number">2.</span> <span class="nav-text">为什么不与num[left]比较</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%A4%E4%BA%BA%E8%BF%B7%E6%83%91%E7%9A%84%E8%A1%A8%E8%B1%A1"><span class="nav-number">2.1.</span> <span class="nav-text">令人迷惑的表象</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BC%9A%E5%87%BA%E9%94%99%EF%BC%9F"><span class="nav-number">2.2.</span> <span class="nav-text">为什么会出错？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%91%E6%95%A3%E6%80%9D%E7%BB%B4"><span class="nav-number">2.3.</span> <span class="nav-text">发散思维</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%BB%E6%89%BE%E6%9C%80%E5%A4%A7%E5%80%BC%E6%80%8E%E4%B9%88%E5%8A%9E%EF%BC%88%E8%BF%98%E6%9C%89%E5%9D%91%EF%BC%89%EF%BC%9F"><span class="nav-number">3.</span> <span class="nav-text">寻找最大值怎么办（还有坑）？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8C%89%E7%85%A7%E7%9B%B8%E5%90%8C%E7%9A%84%E6%80%9D%E8%B7%AF%E5%88%86%E6%9E%90%E9%97%AE%E9%A2%98"><span class="nav-number">3.1.</span> <span class="nav-text">按照相同的思路分析问题</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%8Enums-left-%E6%AF%94%E8%BE%83"><span class="nav-number">3.1.1.</span> <span class="nav-text">与nums[left]比较</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%8Enums-right-%E6%AF%94%E8%BE%83"><span class="nav-number">3.1.2.</span> <span class="nav-text">与nums[right]比较</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81"><span class="nav-number">3.2.</span> <span class="nav-text">代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E7%BB%93%E6%9E%9C"><span class="nav-number">3.3.</span> <span class="nav-text">测试结果</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%B3%95"><span class="nav-number">3.4.</span> <span class="nav-text">解决方法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E5%B0%86%E5%AF%BB%E6%89%BE%E6%9C%80%E5%B0%8F%E5%80%BC%E7%9A%84%E7%BB%93%E6%9E%9C%E4%BF%AE%E6%94%B9%E4%B8%80%E4%B8%8B"><span class="nav-number">3.4.1.</span> <span class="nav-text">一、将寻找最小值的结果修改一下</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E5%A2%9E%E5%8A%A0%E6%95%B0%E7%BB%84%E9%95%BF%E5%BA%A6%E4%B8%8D%E4%B8%BA1%E6%97%B6%EF%BC%8Cmid-left%E7%9A%84%E5%88%A4%E6%96%AD"><span class="nav-number">3.4.2.</span> <span class="nav-text">二、增加数组长度不为1时，mid&#x3D;&#x3D;left的判断</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">水更流</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">21</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">36</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/0shuigengliu" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;0shuigengliu" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://space.bilibili.com/289595050" title="bilibili → https:&#x2F;&#x2F;space.bilibili.com&#x2F;289595050" rel="noopener" target="_blank"><i class="fa fa-fw fa-bilibili"></i>bilibili</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">水更流</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+<div class="powered-by">
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <i class="fa fa-user-md"></i>
+    <span id="busuanzi_container_site_uv">
+        本站访客数:<span id="busuanzi_value_site_uv"></span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span id="busuanzi_container_site_pv">
+        本站访问量<span id="busuanzi_value_site_pv"></span>
+    </span>
+</div>
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

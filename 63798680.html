@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 8.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.shui2000.top","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="题目来自于力扣，题目前的序号为力扣题目编号，题目顺序根据代码随想录https:&#x2F;&#x2F;programmercarl.com&#x2F;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="数组相关算法">
+<meta property="og:url" content="https://www.shui2000.top/63798680.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="题目来自于力扣，题目前的序号为力扣题目编号，题目顺序根据代码随想录https:&#x2F;&#x2F;programmercarl.com&#x2F;">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-04-13T12:32:30.000Z">
+<meta property="article:modified_time" content="2023-04-13T13:23:30.000Z">
+<meta property="article:author" content="水更流">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="数组">
+<meta property="article:tag" content="算法">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://www.shui2000.top/63798680.html">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>数组相关算法 | Hexo</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Hexo</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.shui2000.top/63798680.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="水更流">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hexo">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          数组相关算法
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-04-13 20:32:30 / 修改时间：21:23:30" itemprop="dateCreated datePublished" datetime="2023-04-13T20:32:30+08:00">2023-04-13</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%AE%97%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">算法</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">题目来自于力扣，题目前的序号为力扣题目编号，题目顺序根据代码随想录https://programmercarl.com/</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="704-二分查找"><a href="#704-二分查找" class="headerlink" title="704.二分查找"></a>704.二分查找</h2><p><a target="_blank" rel="noopener" href="https://leetcode.cn/problems/binary-search/">题目链接</a></p>
+<blockquote>
+<p>给定一个 n 个元素有序的（升序）整型数组 nums 和一个目标值 target  ，写一个函数搜索 nums 中的 target，如果目标值存在返回下标，否则返回 -1。<br>示例 1:</p>
+<p>输入: nums &#x3D; [-1,0,3,5,9,12], target &#x3D; 9<br>输出: 4<br>解释: 9 出现在 nums 中并且下标为 4<br>示例 2:</p>
+<p>输入: nums &#x3D; [-1,0,3,5,9,12], target &#x3D; 2<br>输出: -1<br>解释: 2 不存在 nums 中因此返回 -1</p>
+</blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">search</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums, <span class="type">int</span> target)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> l=<span class="number">0</span>;</span><br><span class="line">    <span class="type">int</span> r=nums.<span class="built_in">size</span>()<span class="number">-1</span>;</span><br><span class="line">    <span class="type">int</span> m=(l+r)/<span class="number">2</span>;</span><br><span class="line">    <span class="keyword">while</span>(l&lt;=r)&#123;</span><br><span class="line">        m=(l+r)/<span class="number">2</span>;</span><br><span class="line">        <span class="keyword">if</span>(nums[m]==target)</span><br><span class="line">            <span class="keyword">return</span> m;</span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span>(nums[m]&gt;target)</span><br><span class="line">            r=m<span class="number">-1</span>;</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">            l=m<span class="number">+1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="27-移除元素"><a href="#27-移除元素" class="headerlink" title="27.移除元素"></a>27.移除元素</h2><p><a target="_blank" rel="noopener" href="https://leetcode.cn/problems/remove-element/">题目链接</a></p>
+<blockquote>
+<p>给你一个数组 nums 和一个值 val，你需要 原地 移除所有数值等于 val 的元素，并返回移除后数组的新长度。</p>
+<p>不要使用额外的数组空间，你必须仅使用 O(1) 额外空间并 原地 修改输入数组。</p>
+<p>元素的顺序可以改变。你不需要考虑数组中超出新长度后面的元素。</p>
+<p>​	说明:</p>
+<p>​	为什么返回数值是整数，但输出的答案是数组呢?</p>
+<p>​	请注意，输入数组是以「引用」方式传递的，这意味着在函数里修改输入数组对于调用者是可见的。</p>
+<p>​	你可以想象内部操作如下:</p>
+<p>​	&#x2F;&#x2F; nums 是以“引用”方式传递的。也就是说，不对实参作任何拷贝<br>​	int len &#x3D; removeElement(nums, val);</p>
+<p>​	&#x2F;&#x2F; 在函数里修改输入数组对于调用者是可见的。<br>​	&#x2F;&#x2F; 根据你的函数返回的长度, 它会打印出数组中 该长度范围内 的所有元素。<br>​	for (int i &#x3D; 0; i &lt; len; i++) {<br>   ​	print(nums[i]);<br>​	}	</p>
+<p>示例 1：</p>
+<p>输入：nums &#x3D; [3,2,2,3], val &#x3D; 3<br>输出：2, nums &#x3D; [2,2]<br>解释：函数应该返回新的长度 2, 并且 nums 中的前两个元素均为 2。你不需要考虑数组中超出新长度后面的元素。例如，函数返回的新长度为 2 ，而 nums &#x3D; [2,2,3,3] 或 nums &#x3D; [2,2,0,0]，也会被视作正确答案。<br>示例 2：</p>
+<p>输入：nums &#x3D; [0,1,2,2,3,0,4,2], val &#x3D; 2<br>输出：5, nums &#x3D; [0,1,4,0,3]<br>解释：函数应该返回新的长度 5, 并且 nums 中的前五个元素为 0, 1, 3, 0, 4。注意这五个元素可为任意顺序。你不需要考虑数组中超出新长度后面的元素。</p>
+</blockquote>
+<h3 id="双指针法"><a href="#双指针法" class="headerlink" title="双指针法"></a>双指针法</h3><p>设置快指针fast,与慢指针slow,快指针检测到符合要求（不等于val）的值，则赋值给下标为slow的元素，<strong>slow同时可以表示符合要求的值的个数</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">int removeElement(vector&lt;int&gt; &amp;nums, int val)</span><br><span class="line">&#123;</span><br><span class="line">    int fast=0;</span><br><span class="line">    int slow=0;</span><br><span class="line">    for(fast=0;fast&lt;nums.size();fast++)&#123;</span><br><span class="line">        if(nums[fast]!=val)&#123;</span><br><span class="line">            nums[slow]=nums[fast];</span><br><span class="line">            slow++;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    return slow;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="997-有序数组的平方"><a href="#997-有序数组的平方" class="headerlink" title="997.有序数组的平方"></a>997.有序数组的平方</h2><p><a target="_blank" rel="noopener" href="https://leetcode.cn/problems/squares-of-a-sorted-array/">题目链接</a></p>
+<blockquote>
+<p>给你一个按 <strong>非递减顺序</strong> 排序的整数数组 <code>nums</code>，返回 <strong>每个数字的平方</strong> 组成的新数组，要求也按 <strong>非递减顺序</strong> 排序。</p>
+<p>示例 1：</p>
+<p>输入：nums &#x3D; [-4,-1,0,3,10]<br>输出：[0,1,9,16,100]<br>解释：平方后，数组变为 [16,1,0,9,100]<br>排序后，数组变为 [0,1,9,16,100]<br>示例 2：</p>
+<p>输入：nums &#x3D; [-7,-3,2,3,11]<br>输出：[4,9,9,49,121]</p>
+</blockquote>
+<h3 id="双指针法-1"><a href="#双指针法-1" class="headerlink" title="双指针法"></a>双指针法</h3><p>经过观察，可以发现nums每个数取平方后，是两边大中间小的，可以用双指针法从两边向中间逐渐逼近，每次比较将大数值放在新数组的后面</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">vector&lt;int&gt; sortedSquares(vector&lt;int&gt; &amp;nums)</span><br><span class="line">&#123;</span><br><span class="line">    vector&lt;int&gt; res;</span><br><span class="line">    res.resize(nums.size());</span><br><span class="line">    int left=0;</span><br><span class="line">    int right=nums.size()-1;</span><br><span class="line">    int i=nums.size()-1;</span><br><span class="line">    while(left&lt;=right)&#123;</span><br><span class="line">        int ll=nums[left]*nums[left];</span><br><span class="line">        int rr=nums[right]*nums[right];</span><br><span class="line">        if(ll&gt;rr)&#123;</span><br><span class="line">            res[i]=ll;</span><br><span class="line">            i--;</span><br><span class="line">            left++;</span><br><span class="line">        &#125;else&#123;</span><br><span class="line">            res[i]=rr;</span><br><span class="line">            i--;</span><br><span class="line">            right--;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    return res;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="209-长度最小的子数组"><a href="#209-长度最小的子数组" class="headerlink" title="209.长度最小的子数组"></a>209.长度最小的子数组</h2><p><a target="_blank" rel="noopener" href="https://leetcode.cn/problems/minimum-size-subarray-sum">链接</a></p>
+<blockquote>
+<p>给定一个含有 n 个正整数的数组和一个正整数 target 。</p>
+<p>找出该数组中满足其和 ≥ target 的长度最小的 连续子数组 [numsl, numsl+1, …, numsr-1, numsr] ，并返回其长度。如果不存在符合条件的子数组，返回 0 。</p>
+<p>​	示例 1：</p>
+<p>​	输入：target &#x3D; 7, nums &#x3D; [2,3,1,2,4,3]<br>​	输出：2<br>​	解释：子数组 [4,3] 是该条件下的长度最小的子数组。<br>​	示例 2：</p>
+<p>​	输入：target &#x3D; 4, nums &#x3D; [1,4,4]<br>​	输出：1<br>​	示例 3：</p>
+<p>​	输入：target &#x3D; 11, nums &#x3D; [1,1,1,1,1,1,1,1]<br>​	输出：0</p>
+</blockquote>
+<h3 id="滑动窗口法（双指针法）"><a href="#滑动窗口法（双指针法）" class="headerlink" title="滑动窗口法（双指针法）"></a>滑动窗口法（双指针法）</h3><p>slow与fast之间的序列即为子序列，当子序列的和小于target时，移动fast指针使序列和增加，当子序列的和大于等于target时，不断移动slow指针使子序列长度缩减</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">minSubArrayLen</span><span class="params">(<span class="type">int</span> target, vector&lt;<span class="type">int</span>&gt; &amp;nums)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> fast=<span class="number">0</span>;</span><br><span class="line">    <span class="type">int</span> slow=<span class="number">0</span>;</span><br><span class="line">    <span class="type">int</span> sum=<span class="number">0</span>;</span><br><span class="line">    <span class="type">int</span> min=nums.<span class="built_in">size</span>()<span class="number">+1</span>;</span><br><span class="line">    <span class="keyword">for</span>(fast=<span class="number">0</span>;fast&lt;nums.<span class="built_in">size</span>();fast++)&#123;</span><br><span class="line">        sum+=nums[fast];</span><br><span class="line">        <span class="keyword">while</span>(sum&gt;=target)&#123;</span><br><span class="line">            <span class="type">int</span> length=fast-slow<span class="number">+1</span>;</span><br><span class="line">            <span class="keyword">if</span>(min&gt;length)</span><br><span class="line">                min=length;</span><br><span class="line">            sum-=nums[slow];</span><br><span class="line">            slow++;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span>(min==nums.<span class="built_in">size</span>()<span class="number">+1</span>)<span class="comment">//说明没有符合要求的子序列</span></span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        <span class="keyword">return</span> min;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="59-螺旋矩阵II"><a href="#59-螺旋矩阵II" class="headerlink" title="59.螺旋矩阵II"></a>59.螺旋矩阵II</h2><p><a target="_blank" rel="noopener" href="https://leetcode.cn/problems/spiral-matrix-ii/">题目链接</a></p>
+<blockquote>
+<p>给你一个正整数 <code>n</code> ，生成一个包含 <code>1</code> 到 <code>n2</code> 所有元素，且元素按顺时针顺序螺旋排列的 <code>n x n</code> 正方形矩阵 <code>matrix</code> 。</p>
+<p><strong>示例 1：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt;输入：n = 3</span><br><span class="line">&gt;输出：[[1,2,3],[8,9,4],[7,6,5]]</span><br></pre></td></tr></table></figure>
+
+<p><strong>示例 2：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt;输入：n = 1</span><br><span class="line">&gt;输出：[[1]]</span><br></pre></td></tr></table></figure></blockquote>
+<p>本题不涉及特殊算法</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">vector&lt;vector&lt;<span class="type">int</span>&gt;&gt; <span class="built_in">generateMatrix</span>(<span class="type">int</span> n)</span><br><span class="line">&#123;</span><br><span class="line">    vector&lt;vector&lt;<span class="type">int</span>&gt;&gt; res;</span><br><span class="line">    res.<span class="built_in">resize</span>(n);</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; n; i++)</span><br><span class="line">        res[i].<span class="built_in">resize</span>(n);</span><br><span class="line">    <span class="type">int</span> top = <span class="number">0</span>, bottom = n - <span class="number">1</span>, left = <span class="number">0</span>, right = n - <span class="number">1</span>;</span><br><span class="line">    <span class="type">int</span> i = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">while</span> (i &lt;= n*n)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> j = left; j &lt;= right; j++)</span><br><span class="line">        &#123;</span><br><span class="line">            res[top][j] = i;</span><br><span class="line">            i++;</span><br><span class="line">        &#125;</span><br><span class="line">        top++;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> j = top; j &lt;= bottom; j++)</span><br><span class="line">        &#123;</span><br><span class="line">            res[j][right] = i;</span><br><span class="line">            i++;</span><br><span class="line">        &#125;</span><br><span class="line">        right--;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> j = right; j &gt;= left; j--)</span><br><span class="line">        &#123;</span><br><span class="line">            res[bottom][j] = i;</span><br><span class="line">            i++;</span><br><span class="line">        &#125;</span><br><span class="line">        bottom--;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> j = bottom; j &gt;= top; j--)</span><br><span class="line">        &#123;</span><br><span class="line">            res[j][left] = i;</span><br><span class="line">            i++;</span><br><span class="line">        &#125;</span><br><span class="line">        left++;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> res;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"># C++</a>
+              <a href="/tags/%E7%AE%97%E6%B3%95/" rel="tag"># 算法</a>
+              <a href="/tags/%E6%95%B0%E7%BB%84/" rel="tag"># 数组</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/1dafad22.html" rel="prev" title="校园网环境下访问群晖NAS">
+      <i class="fa fa-chevron-left"></i> 校园网环境下访问群晖NAS
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/db79b42f.html" rel="next" title="链表相关算法">
+      链表相关算法 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#704-%E4%BA%8C%E5%88%86%E6%9F%A5%E6%89%BE"><span class="nav-number">1.</span> <span class="nav-text">704.二分查找</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#27-%E7%A7%BB%E9%99%A4%E5%85%83%E7%B4%A0"><span class="nav-number">2.</span> <span class="nav-text">27.移除元素</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%8C%E6%8C%87%E9%92%88%E6%B3%95"><span class="nav-number">2.1.</span> <span class="nav-text">双指针法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#997-%E6%9C%89%E5%BA%8F%E6%95%B0%E7%BB%84%E7%9A%84%E5%B9%B3%E6%96%B9"><span class="nav-number">3.</span> <span class="nav-text">997.有序数组的平方</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%8C%E6%8C%87%E9%92%88%E6%B3%95-1"><span class="nav-number">3.1.</span> <span class="nav-text">双指针法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#209-%E9%95%BF%E5%BA%A6%E6%9C%80%E5%B0%8F%E7%9A%84%E5%AD%90%E6%95%B0%E7%BB%84"><span class="nav-number">4.</span> <span class="nav-text">209.长度最小的子数组</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E6%B3%95%EF%BC%88%E5%8F%8C%E6%8C%87%E9%92%88%E6%B3%95%EF%BC%89"><span class="nav-number">4.1.</span> <span class="nav-text">滑动窗口法（双指针法）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#59-%E8%9E%BA%E6%97%8B%E7%9F%A9%E9%98%B5II"><span class="nav-number">5.</span> <span class="nav-text">59.螺旋矩阵II</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">水更流</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">21</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">36</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/0shuigengliu" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;0shuigengliu" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://space.bilibili.com/289595050" title="bilibili → https:&#x2F;&#x2F;space.bilibili.com&#x2F;289595050" rel="noopener" target="_blank"><i class="fa fa-fw fa-bilibili"></i>bilibili</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">水更流</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+<div class="powered-by">
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <i class="fa fa-user-md"></i>
+    <span id="busuanzi_container_site_uv">
+        本站访客数:<span id="busuanzi_value_site_uv"></span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span id="busuanzi_container_site_pv">
+        本站访问量<span id="busuanzi_value_site_pv"></span>
+    </span>
+</div>
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

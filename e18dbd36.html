@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 8.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.shui2000.top","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="为XV6增加copy on write机制">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MIT6.S081_2020_Lab6:Copy-on-Write">
+<meta property="og:url" content="https://www.shui2000.top/e18dbd36.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="为XV6增加copy on write机制">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.shui2000.top/e18dbd36/%E4%BF%AE%E6%94%B9%E5%89%8D%E7%9A%84fork%E5%87%BD%E6%95%B0.png">
+<meta property="og:image" content="https://www.shui2000.top/e18dbd36/%E4%BF%AE%E6%94%B9%E5%90%8E%E7%9A%84fork%E5%87%BD%E6%95%B0.png">
+<meta property="og:image" content="https://www.shui2000.top/e18dbd36/%E9%A1%B5%E8%A1%A8%E7%BB%93%E6%9E%84.png">
+<meta property="og:image" content="https://www.shui2000.top/e18dbd36/%E4%BF%AE%E6%94%B9%E5%90%8Efork%E8%BF%87%E7%A8%8B%E4%B8%AD%E7%9A%84%E9%A1%B5%E8%A1%A8%E7%BB%93%E6%9E%84.png">
+<meta property="og:image" content="https://www.shui2000.top/e18dbd36/%E6%9D%83%E9%99%90%E9%97%AE%E9%A2%98.png">
+<meta property="og:image" content="https://www.shui2000.top/e18dbd36/COW-BUG.gif">
+<meta property="article:published_time" content="2024-06-07T13:08:30.000Z">
+<meta property="article:modified_time" content="2026-07-08T16:55:35.115Z">
+<meta property="article:author" content="水更流">
+<meta property="article:tag" content="MIT6.S081">
+<meta property="article:tag" content="copy">
+<meta property="article:tag" content="on">
+<meta property="article:tag" content="write">
+<meta property="article:tag" content="写时复制">
+<meta property="article:tag" content="操作系统">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.shui2000.top/e18dbd36/%E4%BF%AE%E6%94%B9%E5%89%8D%E7%9A%84fork%E5%87%BD%E6%95%B0.png">
+
+<link rel="canonical" href="https://www.shui2000.top/e18dbd36.html">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>MIT6.S081_2020_Lab6:Copy-on-Write | Hexo</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Hexo</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.shui2000.top/e18dbd36.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="水更流">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hexo">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MIT6.S081_2020_Lab6:Copy-on-Write
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2024-06-07 21:08:30" itemprop="dateCreated datePublished" datetime="2024-06-07T21:08:30+08:00">2024-06-07</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2026-07-09 00:55:35" itemprop="dateModified" datetime="2026-07-09T00:55:35+08:00">2026-07-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E9%A1%B9%E7%9B%AE/" itemprop="url" rel="index"><span itemprop="name">项目</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">为XV6增加copy on write机制</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="一、什么是copy-on-write-写时复制-？"><a href="#一、什么是copy-on-write-写时复制-？" class="headerlink" title="一、什么是copy-on write(写时复制)？"></a>一、什么是<code>copy-on write</code>(写时复制)？</h2><p>xv6中的<code>fork()</code>系统调用将父进程的所有用户空间内存复制到子进程中*(同样<code>linux </code>中除<code>pid=1</code>的进程外所有的进程都是<code>fork</code>出来的)*。如果父进程较大，则复制可能需要很长时间。更糟糕的是，这项工作经常造成大量浪费；例如，子进程中的<code>fork()</code>后跟<code>exec()</code>将导致子进程丢弃复制的内存，而其中的大部分可能都从未使用过。另一方面，如果父子进程都使用一个页面，并且其中一个或两个对该页面有写操作，则确实需要复制。</p>
+<p><code>copy-on-write (COW) </code>的<strong>目标是推迟到子进程实际需要物理内存拷贝时再进行分配和复制物理内存页面。</strong></p>
+<p><code>COW</code>只为子进程创建一个页表，用户内存的PTE指向父进程的物理页。<code>COW</code>将父进程和子进程中的所有用户PTE标记为不可写。当任一进程试图写入其中一个<code>COW</code>页时，CPU将强制产生页面错误(<code>page fault</code>)。内核页面错误处理程序检测到这种情况将为出错进程分配一页物理内存，将原始页复制到新页中，并修改出错进程中的相关PTE指向新的页面，将PTE标记为可写。当页面错误处理程序返回时，用户进程将能够写入其页面副本。</p>
+<p><code>COW</code>将使得释放用户内存的物理页面变得更加棘手。给定的物理页可能会被多个进程的页表引用，并且只有在最后一个引用消失时才应该被释放。</p>
+<p>我们可以看出来 <code>COW</code>与<code>lazy allocation</code>相似，都是在进程要求分配内存的时候，不实际分配物理地址，等到发生<code>page fault</code>后再进行处理。<strong><code>page fault</code>是<code>cow</code>与<code>lazy allocation</code>的核心</strong></p>
+<h2 id="二、如何实现copy-on-write"><a href="#二、如何实现copy-on-write" class="headerlink" title="二、如何实现copy-on write"></a>二、如何实现<code>copy-on write</code></h2><h3 id="1-修改fork-函数"><a href="#1-修改fork-函数" class="headerlink" title="1.修改fork()函数"></a>1.修改<code>fork()</code>函数</h3><p>子进程都是由父进程<code>fork</code>而来，想要实现<code>copy-on write</code>，需要我们对<code>fork</code>函数做修改。</p>
+<p>原本的<code>fork()</code>函数会将父进程的所有数据都复制到子进程。修改后的<code>fork()</code>函数需要将子进程内存的PTE指向父进程，权限相关的讨论我们之后进行。</p>
+<p>修改前的fork函数如下：</p>
+<img src="/e18dbd36/%E4%BF%AE%E6%94%B9%E5%89%8D%E7%9A%84fork%E5%87%BD%E6%95%B0.png" class="" title="修改前的fork函数.">
+
+<p>修改后的fork函数如下：</p>
+<img src="/e18dbd36/%E4%BF%AE%E6%94%B9%E5%90%8E%E7%9A%84fork%E5%87%BD%E6%95%B0.png" class="" title="修改后的fork函数">
+
+
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//fork()函数 从已经存在的进程中创建一个子进程，而原进程称为父进程。fork函数 需要为新子进程生成pid等功能，uvmcopy函数负责将</span></span><br><span class="line"><span class="comment">//父进程的pte所指的值复制给子进程</span></span><br><span class="line"><span class="type">int</span></span><br><span class="line"><span class="title function_">uvmcopy</span><span class="params">(<span class="type">pagetable_t</span> old, <span class="type">pagetable_t</span> new, uint64 sz)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">pte_t</span> *pte;</span><br><span class="line">  uint64 pa, i;</span><br><span class="line">  uint flags;</span><br><span class="line">  <span class="type">char</span> *mem;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span>(i = <span class="number">0</span>; i &lt; sz; i += PGSIZE)&#123;</span><br><span class="line">    <span class="keyword">if</span>((pte = walk(old, i, <span class="number">0</span>)) == <span class="number">0</span>)</span><br><span class="line">      panic(<span class="string">&quot;uvmcopy: pte should exist&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span>((*pte &amp; PTE_V) == <span class="number">0</span>)</span><br><span class="line">      panic(<span class="string">&quot;uvmcopy: page not present&quot;</span>);</span><br><span class="line">    pa = PTE2PA(*pte);</span><br><span class="line">    flags = PTE_FLAGS(*pte);</span><br><span class="line">    <span class="keyword">if</span>((mem = kalloc()) == <span class="number">0</span>)</span><br><span class="line">      <span class="keyword">goto</span> err;</span><br><span class="line">    memmove(mem, (<span class="type">char</span>*)pa, PGSIZE);</span><br><span class="line">    <span class="keyword">if</span>(mappages(new, i, PGSIZE, (uint64)mem, flags) != <span class="number">0</span>)&#123;</span><br><span class="line">      kfree(mem);</span><br><span class="line">      <span class="keyword">goto</span> err;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"> err:</span><br><span class="line">  uvmunmap(new, <span class="number">0</span>, i / PGSIZE, <span class="number">1</span>);</span><br><span class="line">  <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="1-1-子进程如何共享父进程的地址空间？"><a href="#1-1-子进程如何共享父进程的地址空间？" class="headerlink" title="1.1 子进程如何共享父进程的地址空间？"></a>1.1 子进程如何共享父进程的地址空间？</h4><h5 id="1-1-1-方法一、复制页表-pagetable-的值"><a href="#1-1-1-方法一、复制页表-pagetable-的值" class="headerlink" title="1.1.1 方法一、复制页表(pagetable)的值"></a>1.1.1 方法一、复制页表<code>(pagetable)</code>的值</h5><img src="/e18dbd36/%E9%A1%B5%E8%A1%A8%E7%BB%93%E6%9E%84.png" class="" title="页表结构">
+
+<p>第一种方法，在<code>fork</code>函数新建子进程时，直接将子进程的<code>pagetable</code>值赋值父进程的<code>pagetable</code>值。</p>
+<p>这种方法在复制时快速有效，但是存在以下几个问题：</p>
+<p>(1).倘若进程2修改物理内存<code>A</code>的数据，为了不影响父进程，父进程对应的物理内存数据不能发生改变。只有进程2从<code>Pagetable</code>开始修改，重新建立<code>level2</code>、<code>level1</code>、<code>level0</code>级页表,B页表指向新的物理内存才可以实现。<strong>同时，考虑到内存引用计数机制的需求，该方法无法正确判断一个物理页面的引用计数</strong>，因为直接复制了<code>pagetable</code>，没有牵扯到最低级的物理内存。</p>
+<p>所以该方法<strong>不满足</strong>需求。</p>
+<h5 id="1-1-2-方法二、仅将最后一级PTE的值指向物理内存"><a href="#1-1-2-方法二、仅将最后一级PTE的值指向物理内存" class="headerlink" title="1.1.2 方法二、仅将最后一级PTE的值指向物理内存"></a>1.1.2 方法二、仅将最后一级PTE的值指向物理内存</h5><img src="/e18dbd36/%E4%BF%AE%E6%94%B9%E5%90%8Efork%E8%BF%87%E7%A8%8B%E4%B8%AD%E7%9A%84%E9%A1%B5%E8%A1%A8%E7%BB%93%E6%9E%84.png" class="" title="image-20240522133436582">
+
+<p>第二种方法，在<code>fork</code>函数新建子进程时，子进程自建完整的页表结构，只将最后一级<code>PTE</code>指向与父进程相同的物理内存。</p>
+<p><strong>该方法由于直接涉及到了物理内存，方便加入引用计数机制</strong>，同时，当需要向页面写入数据时，只需要修改最低级<code>PTE</code>所指的物理内存即可。</p>
+<p>该方法<strong>满足</strong>需求。</p>
+<h3 id="2-权限问题"><a href="#2-权限问题" class="headerlink" title="2.权限问题"></a>2.权限问题</h3><p>**写时复制将父进程和子进程中的所有用户PTE标记为不可写。当任一进程试图写入其中一个COW页时，CPU将强制产生页面错误。**这样做缺少分辨父进程原本有无权限的有限方法，<strong>需要我们增加标志位来辅助辨别。</strong></p>
+<p>XV6操作系统的权限管理比较简单，没有支持<code>Linux</code>的多用户权限，XV6通过<code>PTE</code>低10位作为Flag标志位来管理权限。</p>
+<img src="/e18dbd36/%E6%9D%83%E9%99%90%E9%97%AE%E9%A2%98.png" class="" title="image-20240522151206552">
+
+<p>低8位与低9位被保留下来，作为拓展标志位使用。我们可以利用<strong>低8位作为COW标志位</strong>。</p>
+<p><strong>父进程原本拥有对物理内存的写权限，父子进程COW位被设为1.</strong><br><strong>父进程原本未拥有对物理内存的写权限，父子进程COW位被设为0.</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span></span><br><span class="line"><span class="title function_">uvmcopy</span><span class="params">(<span class="type">pagetable_t</span> old, <span class="type">pagetable_t</span> new, uint64 sz)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">pte_t</span> *oldpte;</span><br><span class="line">  <span class="type">pte_t</span> *newpte;</span><br><span class="line">  uint64 pa, i;</span><br><span class="line">  <span class="comment">//uint flags;</span></span><br><span class="line">  <span class="comment">//char *mem;</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span>(i = <span class="number">0</span>; i &lt; sz; i += PGSIZE)&#123;</span><br><span class="line">    <span class="keyword">if</span>((oldpte = walk(old, i, <span class="number">0</span>)) == <span class="number">0</span>)</span><br><span class="line">      panic(<span class="string">&quot;uvmcopy: oldpte should exist&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span>((*oldpte &amp; PTE_V) == <span class="number">0</span>)</span><br><span class="line">      panic(<span class="string">&quot;uvmcopy: oldpage not present&quot;</span>);</span><br><span class="line">    pa = PTE2PA(*oldpte);</span><br><span class="line">    <span class="comment">//flags=PTE_FLAGS(*oldpte);</span></span><br><span class="line">    <span class="keyword">if</span>(*oldpte&amp;PTE_W)&#123;</span><br><span class="line">      *oldpte=*oldpte&amp;(~PTE_W);</span><br><span class="line">      *oldpte=*oldpte|PTE_RSW;</span><br><span class="line">      <span class="comment">//flags=PTE_FLAGS(*oldpte);</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>((newpte = walk(new, i, <span class="number">1</span>)) == <span class="number">0</span>)</span><br><span class="line">      panic(<span class="string">&quot;uvmcopy: newpte should exist&quot;</span>);</span><br><span class="line">    addpgcnt(PGROUNDDOWN(pa));</span><br><span class="line">    *newpte=*oldpte;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-引用计数"><a href="#3-引用计数" class="headerlink" title="3.引用计数"></a>3.引用计数</h3><p>原本的XV6操作系统中，由于<code>fork</code>函数会将父进程的用户空间完全复制到新的物理内存中再映射给子进程。进程在释放物理内存等操作时不需要考虑到其父进程或子进程使用同一物理内存的情况，在增加写时复制机制后，XV6操作系统在处理某进程由于写操作引起的页面错误时必须保证其他进程的正常运行，所以为物理内存增加引用计数是必要的。</p>
+<p><strong>需要引用计数辅助决定需要写入数据的进程是否需要额外申请物理内存</strong>。</p>
+<p>当引用计数大于1时，写入数据的进程需要自己申请一块空闲内存，该内存的数据复制自原本将写入的内存，进程最后一级的<code>PTE</code>指向新分配的物理内存，再进行自己的写入操作。同时旧物理内存的引用数需要减1。</p>
+<p>当引用计数等于1时，直接写入数据即可。</p>
+<h4 id="引用计数功能的实现"><a href="#引用计数功能的实现" class="headerlink" title="引用计数功能的实现"></a>引用计数功能的实现</h4><p>XV6操作系统<strong>原本的物理内存分配与回收机制</strong>是将将空闲的物理内存地址空间以页(4096个字节)为单位，使用链表结构将页整理起来。进程申请物理内存时，操作系统从链表中取出一个物理内存分配给进程，当进程结束时，操作系统回收页表将其加入空闲链表中。</p>
+<p>引用计数功能的实现不需要对原本页表的分配释放机制做出太大的改变：</p>
+<p>XV6操作系统参与分配的页表数量是固定的(<code>PHYSTOP/PGSIZE</code>)，使用一个固定大小的数值便可以记录每个页表的引用次数。同时使用<strong>自旋锁</strong>保证引用计数的互斥性。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> </span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">spinlock</span> <span class="title">lock</span>;</span></span><br><span class="line">  <span class="type">int</span> cnt[PHYSTOP/PGSIZE];</span><br><span class="line">&#125; pgcnt;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><code>kalloc</code>原本用于分配空闲页表，修改后额外将<code>cnt(引用计数)</code>设为1值</p>
+<p><code>kfree</code>原本用于释放回收页表，修改后只有当<code>cnt(引用计数)</code>为1时才释放页表，其余情况下只需要将<code>cnt(引用计数)</code>减1即可。</p>
+<p>额外增加3个函数，<code>addpgcnt(uint64 pa)</code>将物理内存<code>pa</code>的<code>cnt</code>值加1（该功能用于fork函数子进程共享父进程的物理内存），<code>cntpgcnt(uint64 pa)</code>返回物理内存<code>pa</code>的<code>cnt</code>值。</p>
+<h3 id="4-虚拟地址合法范围"><a href="#4-虚拟地址合法范围" class="headerlink" title="4.虚拟地址合法范围"></a>4.虚拟地址合法范围</h3><p>在实际的代码编写过程中，我遇到了一个bug：</p>
+<img src="/e18dbd36/COW-BUG.gif" class="" title="COW-BUG">
+
+
+<p>这一<strong>BUG发生的原因</strong>经过排查后得到：在<a href="https://www.shui2000.top/posts/4fd45b61.html">Lab5_xv6LazyPageAllocation</a>实验中，为了满足<code>usertest</code>的要求，我在<code>usertrap</code>中加入了对发生错误的虚拟地址合法性检测。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(p-&gt;trapframe-&gt;sp&gt;failedva)&#123;</span><br><span class="line">      p-&gt;killed=<span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这段代码将虚拟地址发生在栈指针下的情况视为错误，终止了进程。并且成功通过了测验。</p>
+<p>在本实验中我考虑到<code>COW</code>与<code>Lazy Allocation</code>都是利用<code>page fault</code>在中断处理函数<code>usertrap</code>中做文章,并且<code>scause</code>值都相同，皆为13或15，便直接将<code>Lazy Allocation</code>的这段检测代码复制了过来。</p>
+<p>实际上：<code>Lazy Allocation</code>是对<strong>堆分配做出的优化</strong>，并且在之前的实验中并没有涉及对<code>fork</code>函数的修改，通过<code>fork</code>产生的子函数，<code>p-&gt;sz</code>值大于等于栈指针是必然的。所以<code>Lazy Allocation</code>假分配虚拟地址报错必然是高于栈指针。</p>
+<p><code>COW</code>对<code>fork</code>函数进行了修改，在0-<code>p-&gt;sz</code>的范围内，子进程所有的物理内存都是共享自父进程。<strong>所以页面错误<code>(page fault)</code>可能发生在栈指针下</strong>，<strong>更详细的BUG分析在<a href="https://www.shui2000.top/posts/a33744ac.html">Lab6 init starting sh bug 原因分析</a>文章中。</strong></p>
+<p>实际上虚拟地址的合法范围应该是<code>0~p-&gt;sz</code>。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/MIT6-S081/" rel="tag"># MIT6.S081</a>
+              <a href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" rel="tag"># 操作系统</a>
+              <a href="/tags/copy/" rel="tag"># copy</a>
+              <a href="/tags/on/" rel="tag"># on</a>
+              <a href="/tags/write/" rel="tag"># write</a>
+              <a href="/tags/%E5%86%99%E6%97%B6%E5%A4%8D%E5%88%B6/" rel="tag"># 写时复制</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/a33744ac.html" rel="prev" title="MIT6.S081_2020_Lab6:init-starting-sh-bug-原因分析">
+      <i class="fa fa-chevron-left"></i> MIT6.S081_2020_Lab6:init-starting-sh-bug-原因分析
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/f1a64171.html" rel="next" title="二叉树的前中后三序遍历">
+      二叉树的前中后三序遍历 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E4%BB%80%E4%B9%88%E6%98%AFcopy-on-write-%E5%86%99%E6%97%B6%E5%A4%8D%E5%88%B6-%EF%BC%9F"><span class="nav-number">1.</span> <span class="nav-text">一、什么是copy-on write(写时复制)？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0copy-on-write"><span class="nav-number">2.</span> <span class="nav-text">二、如何实现copy-on write</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E4%BF%AE%E6%94%B9fork-%E5%87%BD%E6%95%B0"><span class="nav-number">2.1.</span> <span class="nav-text">1.修改fork()函数</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-1-%E5%AD%90%E8%BF%9B%E7%A8%8B%E5%A6%82%E4%BD%95%E5%85%B1%E4%BA%AB%E7%88%B6%E8%BF%9B%E7%A8%8B%E7%9A%84%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4%EF%BC%9F"><span class="nav-number">2.1.1.</span> <span class="nav-text">1.1 子进程如何共享父进程的地址空间？</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#1-1-1-%E6%96%B9%E6%B3%95%E4%B8%80%E3%80%81%E5%A4%8D%E5%88%B6%E9%A1%B5%E8%A1%A8-pagetable-%E7%9A%84%E5%80%BC"><span class="nav-number">2.1.1.1.</span> <span class="nav-text">1.1.1 方法一、复制页表(pagetable)的值</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#1-1-2-%E6%96%B9%E6%B3%95%E4%BA%8C%E3%80%81%E4%BB%85%E5%B0%86%E6%9C%80%E5%90%8E%E4%B8%80%E7%BA%A7PTE%E7%9A%84%E5%80%BC%E6%8C%87%E5%90%91%E7%89%A9%E7%90%86%E5%86%85%E5%AD%98"><span class="nav-number">2.1.1.2.</span> <span class="nav-text">1.1.2 方法二、仅将最后一级PTE的值指向物理内存</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E6%9D%83%E9%99%90%E9%97%AE%E9%A2%98"><span class="nav-number">2.2.</span> <span class="nav-text">2.权限问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E5%BC%95%E7%94%A8%E8%AE%A1%E6%95%B0"><span class="nav-number">2.3.</span> <span class="nav-text">3.引用计数</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BC%95%E7%94%A8%E8%AE%A1%E6%95%B0%E5%8A%9F%E8%83%BD%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.3.1.</span> <span class="nav-text">引用计数功能的实现</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-%E8%99%9A%E6%8B%9F%E5%9C%B0%E5%9D%80%E5%90%88%E6%B3%95%E8%8C%83%E5%9B%B4"><span class="nav-number">2.4.</span> <span class="nav-text">4.虚拟地址合法范围</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">水更流</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">21</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">36</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/0shuigengliu" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;0shuigengliu" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://space.bilibili.com/289595050" title="bilibili → https:&#x2F;&#x2F;space.bilibili.com&#x2F;289595050" rel="noopener" target="_blank"><i class="fa fa-fw fa-bilibili"></i>bilibili</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">水更流</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+<div class="powered-by">
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <i class="fa fa-user-md"></i>
+    <span id="busuanzi_container_site_uv">
+        本站访客数:<span id="busuanzi_value_site_uv"></span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span id="busuanzi_container_site_pv">
+        本站访问量<span id="busuanzi_value_site_pv"></span>
+    </span>
+</div>
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

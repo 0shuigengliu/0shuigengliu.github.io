@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 8.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.shui2000.top","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="在**Ubuntu22.04虚拟机**开启NFS服务后，使用开发板挂载时遇见的几个问题">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Ubuntu22.04 NFS服务挂载到开发板的时遇到的BUG">
+<meta property="og:url" content="https://www.shui2000.top/6416c38f.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="在**Ubuntu22.04虚拟机**开启NFS服务后，使用开发板挂载时遇见的几个问题">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.shui2000.top/6416c38f/%E8%BF%9E%E6%8E%A5%E8%B6%85%E6%97%B6.png">
+<meta property="og:image" content="https://www.shui2000.top/6416c38f/nfs%E6%94%AF%E6%8C%81%E7%89%88%E6%9C%AC.png">
+<meta property="og:image" content="https://www.shui2000.top/6416c38f/%E9%87%8D%E5%90%AFnfs%E7%9A%84%E7%BB%93%E6%9E%9C.png">
+<meta property="og:image" content="https://www.shui2000.top/6416c38f/%E6%9F%A5%E7%9C%8B%E7%BC%96%E8%AF%91%E5%99%A8%E7%89%88%E6%9C%AC.png">
+<meta property="article:published_time" content="2023-03-09T16:32:30.000Z">
+<meta property="article:modified_time" content="2025-01-16T16:43:36.000Z">
+<meta property="article:author" content="水更流">
+<meta property="article:tag" content="Ubuntu">
+<meta property="article:tag" content="嵌入式系统">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.shui2000.top/6416c38f/%E8%BF%9E%E6%8E%A5%E8%B6%85%E6%97%B6.png">
+
+<link rel="canonical" href="https://www.shui2000.top/6416c38f.html">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Ubuntu22.04 NFS服务挂载到开发板的时遇到的BUG | Hexo</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Hexo</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.shui2000.top/6416c38f.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="水更流">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hexo">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Ubuntu22.04 NFS服务挂载到开发板的时遇到的BUG
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-03-10 00:32:30" itemprop="dateCreated datePublished" datetime="2023-03-10T00:32:30+08:00">2023-03-10</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2025-01-17 00:43:36" itemprop="dateModified" datetime="2025-01-17T00:43:36+08:00">2025-01-17</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/BUG%E5%A4%A7%E5%85%A8/" itemprop="url" rel="index"><span itemprop="name">BUG大全</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">在**Ubuntu22.04虚拟机**开启NFS服务后，使用开发板挂载时遇见的几个问题</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="错误一：即使关闭了防火墙，连接依旧超时"><a href="#错误一：即使关闭了防火墙，连接依旧超时" class="headerlink" title="错误一：即使关闭了防火墙，连接依旧超时"></a>错误一：即使关闭了防火墙，连接依旧超时</h2><p><strong>错误描述：<strong>在Ubuntu设置好NFS服务后进行挂载，发现</strong>即使关闭了防火墙，也不起作用</strong></p>
+<p>显示：<img src="/6416c38f/%E8%BF%9E%E6%8E%A5%E8%B6%85%E6%97%B6.png" class="" title="微信图片_20230310135006"></p>
+<p><strong>错误来源</strong>：开发板安装的NFS服务版本过低，Ubuntu22.04下载的NFS版本高，默认情况下不支持较低版本NFS挂载服务，需要我们手动对配置进行修改。</p>
+<p><strong>解决方法：</strong></p>
+<p>​	1.输入代码<code>cat /proc/fs/nfsd/versions</code>查看当前NFS服务所支持的版本，输出结果如果为</p>
+<img src="/6416c38f/nfs%E6%94%AF%E6%8C%81%E7%89%88%E6%9C%AC.png" class="" title="微信图片_20230310135112">
+
+<p><em>可以看见其他数字前面都是+号，唯独2前面是-号，说明此时NFS服务不支持NFS2版本进行挂载服务，从而出现了连接超时。</em></p>
+<p>​	2.修改虚拟机的nfs配置，<code>vim /etc/default/nfs-kernel-server</code>，修改三个参数为</p>
+<p>​			<code>RPCNFSDCOUNT=&quot;-V 2 8&quot;</code>;<code>RPCMOUNTDOPTS=&quot;-V 2 --manage-gids&quot;</code>;<code>RPCSVCGSSDOPTS=&quot;--nfs-version 2,3,4 --debug --syslog&quot;;</code></p>
+<p>​    3.输入<code>RPCSVCGSSDOPTS=&quot;--nfs-version 2,3,4 --debug --syslog&quot;</code>,修改两个参数</p>
+<p>​		<code>udp=y</code>;<code>vers2=y</code></p>
+<p>​	4.重启nfs服务（<code>sudo /etc/init.d/portmap restart</code>;<code>sudo /etc/init.d/**nfs**-kernel-server restart</code>），再查看现在支持的nfs版本（<code>cat /proc/fs/nfsd/versions</code>）。</p>
+<img src="/6416c38f/%E9%87%8D%E5%90%AFnfs%E7%9A%84%E7%BB%93%E6%9E%9C.png" class="" title="微信图片_20230310140318">
+
+<p><em>可以看见目前已经支持了nfs2，可以正常进行挂载服务</em></p>
+<p><em>此方法学习自<a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_56646002/article/details/127388021?spm=1001.2014.3001.5506">门牙会稍息</a></em></p>
+<h2 id="错误二：成功挂载后，双方文件夹不互相同步"><a href="#错误二：成功挂载后，双方文件夹不互相同步" class="headerlink" title="错误二：成功挂载后，双方文件夹不互相同步"></a>错误二：成功挂载后，双方文件夹不互相同步</h2><p>**错误来源：**假设Ubuntu为A,开发板为B，我们想将<code>A:/home/nfs </code>挂载至<code>B:/mnt</code>文件夹，挂载时A正处于<code>/home/nfs</code>B正处于<code>B:/mnt</code>路径下，问题原因我尚未理解。</p>
+<p>**解决办法：**先解决开发板的挂载状态，再返回根目录后进行挂载</p>
+<h2 id="错误三：安装交叉编译环境时，配置好环境后输入arm-linux-gcc-v提示command-not-founnd"><a href="#错误三：安装交叉编译环境时，配置好环境后输入arm-linux-gcc-v提示command-not-founnd" class="headerlink" title="错误三：安装交叉编译环境时，配置好环境后输入arm-linux-gcc -v提示command not founnd"></a>错误三：安装交叉编译环境时，配置好环境后输入<code>arm-linux-gcc -v</code>提示<code>command not founnd</code></h2><p>**错误原因：**有可能安装了32位版本的编译器，而我们的Ubuntu是64位的</p>
+<p>**解决办法：**安装32位依赖包，输入<code>apt install lib32z1</code>，再输入<code>arm-linux-gcc -v</code>查看编译器版本</p>
+<img src="/6416c38f/%E6%9F%A5%E7%9C%8B%E7%BC%96%E8%AF%91%E5%99%A8%E7%89%88%E6%9C%AC.png" class="" title="image-20230310142124403">
+
+<p><em>gcc可以正常使用</em></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Ubuntu/" rel="tag"># Ubuntu</a>
+              <a href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F%E7%B3%BB%E7%BB%9F/" rel="tag"># 嵌入式系统</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/76f723b3.html" rel="next" title="使用Vmware虚拟机无法ping通开发板">
+      使用Vmware虚拟机无法ping通开发板 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%94%99%E8%AF%AF%E4%B8%80%EF%BC%9A%E5%8D%B3%E4%BD%BF%E5%85%B3%E9%97%AD%E4%BA%86%E9%98%B2%E7%81%AB%E5%A2%99%EF%BC%8C%E8%BF%9E%E6%8E%A5%E4%BE%9D%E6%97%A7%E8%B6%85%E6%97%B6"><span class="nav-number">1.</span> <span class="nav-text">错误一：即使关闭了防火墙，连接依旧超时</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%94%99%E8%AF%AF%E4%BA%8C%EF%BC%9A%E6%88%90%E5%8A%9F%E6%8C%82%E8%BD%BD%E5%90%8E%EF%BC%8C%E5%8F%8C%E6%96%B9%E6%96%87%E4%BB%B6%E5%A4%B9%E4%B8%8D%E4%BA%92%E7%9B%B8%E5%90%8C%E6%AD%A5"><span class="nav-number">2.</span> <span class="nav-text">错误二：成功挂载后，双方文件夹不互相同步</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%94%99%E8%AF%AF%E4%B8%89%EF%BC%9A%E5%AE%89%E8%A3%85%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E7%8E%AF%E5%A2%83%E6%97%B6%EF%BC%8C%E9%85%8D%E7%BD%AE%E5%A5%BD%E7%8E%AF%E5%A2%83%E5%90%8E%E8%BE%93%E5%85%A5arm-linux-gcc-v%E6%8F%90%E7%A4%BAcommand-not-founnd"><span class="nav-number">3.</span> <span class="nav-text">错误三：安装交叉编译环境时，配置好环境后输入arm-linux-gcc -v提示command not founnd</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">水更流</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">21</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">36</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/0shuigengliu" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;0shuigengliu" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://space.bilibili.com/289595050" title="bilibili → https:&#x2F;&#x2F;space.bilibili.com&#x2F;289595050" rel="noopener" target="_blank"><i class="fa fa-fw fa-bilibili"></i>bilibili</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">水更流</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+<div class="powered-by">
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <i class="fa fa-user-md"></i>
+    <span id="busuanzi_container_site_uv">
+        本站访客数:<span id="busuanzi_value_site_uv"></span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span id="busuanzi_container_site_pv">
+        本站访问量<span id="busuanzi_value_site_pv"></span>
+    </span>
+</div>
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

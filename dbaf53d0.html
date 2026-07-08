@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 8.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.shui2000.top","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="Docker中的Ubuntu无法正常使用systemctl操作">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Docker中的Ubuntu无法正常使用systemctl操作">
+<meta property="og:url" content="https://www.shui2000.top/dbaf53d0.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="Docker中的Ubuntu无法正常使用systemctl操作">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.shui2000.top/dbaf53d0/docker.png">
+<meta property="og:image" content="https://www.shui2000.top/dbaf53d0/%E6%97%A0%E6%B3%95%E5%AE%9E%E7%8E%B0%E6%95%88%E6%9E%9C.png">
+<meta property="og:image" content="https://www.shui2000.top/dbaf53d0/%E6%AD%A3%E5%B8%B8Ubuntu%E8%BF%9B%E7%A8%8B.png">
+<meta property="og:image" content="https://www.shui2000.top/dbaf53d0/Docker-Ubuntu%E8%BF%9B%E7%A8%8B.png">
+<meta property="og:image" content="https://www.shui2000.top/dbaf53d0/%E4%BB%A3%E7%A0%81%E6%AD%A3%E7%A1%AE%E8%BF%90%E8%A1%8C%E7%BB%93%E6%9E%9C.png">
+<meta property="og:image" content="https://www.shui2000.top/dbaf53d0/%E7%BC%BA%E5%B0%91init.png">
+<meta property="og:image" content="https://www.shui2000.top/dbaf53d0/%E6%AD%A3%E5%B8%B8%E7%9A%84init%E6%98%AF%E4%BB%80%E4%B9%88.png">
+<meta property="og:image" content="https://www.shui2000.top/dbaf53d0/%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6.png">
+<meta property="og:image" content="https://www.shui2000.top/dbaf53d0/%E4%BF%AE%E6%94%B9%E6%88%90%E5%8A%9F.png">
+<meta property="article:published_time" content="2023-04-05T16:32:30.000Z">
+<meta property="article:modified_time" content="2026-07-08T16:55:35.091Z">
+<meta property="article:author" content="水更流">
+<meta property="article:tag" content="Docker">
+<meta property="article:tag" content="NAS">
+<meta property="article:tag" content="Ubuntu">
+<meta property="article:tag" content="群晖">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.shui2000.top/dbaf53d0/docker.png">
+
+<link rel="canonical" href="https://www.shui2000.top/dbaf53d0.html">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Docker中的Ubuntu无法正常使用systemctl操作 | Hexo</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Hexo</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.shui2000.top/dbaf53d0.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="水更流">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hexo">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Docker中的Ubuntu无法正常使用systemctl操作
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-04-06 00:32:30" itemprop="dateCreated datePublished" datetime="2023-04-06T00:32:30+08:00">2023-04-06</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2026-07-09 00:55:35" itemprop="dateModified" datetime="2026-07-09T00:55:35+08:00">2026-07-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/BUG%E5%A4%A7%E5%85%A8/" itemprop="url" rel="index"><span itemprop="name">BUG大全</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">Docker中的Ubuntu无法正常使用systemctl操作</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h2><img src="/dbaf53d0/docker.png" class="" title="image-20230403183630354">
+
+<p>​		在docker中安装Ubuntu，试图用systemctl命令来实现Ubuntu开机后自动打开ssh，发现无法实现想要的效果。</p>
+<img src="/dbaf53d0/%E6%97%A0%E6%B3%95%E5%AE%9E%E7%8E%B0%E6%95%88%E6%9E%9C.png" class="" title="image-20230403183804899">
+
+<h2 id="产生原因"><a href="#产生原因" class="headerlink" title="产生原因"></a>产生原因</h2><p>​		Loaded显示enabled说明ssh开机应该会自动启动，但是实际上开机之后却是inactive（没有成功运行）</p>
+<p>​		经过查阅资料，发现<strong>Docker只是提供了进程隔离，不是操作系统的虚拟</strong>，它并不是我想象中的虚拟机，不会模拟硬件，只是会为每一个应用提供隔离的运行环境。</p>
+<p>​		<strong>正常</strong>的Ubuntu系统的1号进程(PID&#x3D;1)是init，可以系统的初始化脚本，创建一系列的子进程，如图</p>
+<img src="/dbaf53d0/%E6%AD%A3%E5%B8%B8Ubuntu%E8%BF%9B%E7%A8%8B.png" class="" title="image-20230403185105035">
+
+<p>​		<strong>Docker</strong>版本的Ubuntu的1号进程不是init，导致systemctl功能异常。</p>
+<img src="/dbaf53d0/Docker-Ubuntu%E8%BF%9B%E7%A8%8B.png" class="" title="image-20230403185230617">
+
+<h2 id="解决办法"><a href="#解决办法" class="headerlink" title="解决办法"></a>解决办法</h2><h3 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker run -tid --name ubuntu01 --privileged=true ubuntu /sbin/init</span><br><span class="line">docker exec -it ubuntu01 /bin/bash</span><br></pre></td></tr></table></figure>
+
+<h3 id="代码解释"><a href="#代码解释" class="headerlink" title="代码解释"></a>代码解释</h3><h4 id="docker-run-tid-name-ubuntu01-privileged-true-ubuntu-sbin-init"><a href="#docker-run-tid-name-ubuntu01-privileged-true-ubuntu-sbin-init" class="headerlink" title="docker run -tid --name ubuntu01 --privileged=true ubuntu /sbin/init"></a><code>docker run -tid --name ubuntu01 --privileged=true ubuntu /sbin/init</code></h4><p>​		ubuntu01是容器(container)名称， ubuntu是映像(images)名称</p>
+<p>​		帮助中显示run的作用原文为:<code>run         Run a command in a new container</code></p>
+<p>​		所以这条指令的<strong>含义</strong>是利用ubuntu映像<strong>创建并运行</strong>一个名为ubuntu01的容器，–privileged&#x3D;true给予容器更高的特权，启动&#x2F;sbin&#x2F;init进程*(使系统初始化)*</p>
+<p>​		注意<strong>不同系统（Centos，Ubuntu）的init位置不同，Centos在&#x2F;usr&#x2F;sbin&#x2F;init，Ubuntu在&#x2F;sbin&#x2F;init</strong></p>
+<h4 id="docker-exec-it-ubuntu01-bin-bash"><a href="#docker-exec-it-ubuntu01-bin-bash" class="headerlink" title="docker exec -it ubuntu01 /bin/bash"></a><code>docker exec -it ubuntu01 /bin/bash</code></h4><p>​		帮助中显示exec的作用原文为:<code>exec        Run a command in a running container</code></p>
+<p>​		-it 与容器中的shell进行交流</p>
+<p>​		所以这条指令的<strong>含义</strong>是在已经启动的容器中运行<code>/bin/bash</code>指令*（启动一个bash shell）*</p>
+<h3 id="代码正确运行结果"><a href="#代码正确运行结果" class="headerlink" title="代码正确运行结果"></a>代码正确运行结果</h3><img src="/dbaf53d0/%E4%BB%A3%E7%A0%81%E6%AD%A3%E7%A1%AE%E8%BF%90%E8%A1%8C%E7%BB%93%E6%9E%9C.png" class="" title="image-20230403201120444">
+
+<h3 id="假如Ubuntu的-sbin-init文件不存在"><a href="#假如Ubuntu的-sbin-init文件不存在" class="headerlink" title="假如Ubuntu的&#x2F;sbin&#x2F;init文件不存在"></a>假如Ubuntu的&#x2F;sbin&#x2F;init文件不存在</h3><h4 id="问题描述-1"><a href="#问题描述-1" class="headerlink" title="问题描述"></a>问题描述</h4><p>​		在使用<code>docker run -tid --name ubuntu01 --privileged=true ubuntu /sbin/init</code>代码进行操作后出现<strong>错误</strong>：</p>
+<p><code>docker: Error response from daemon: OCI runtime create failed: container_linux.go:367: starting container process caused: exec: &quot;/sbin/init&quot;: stat /sbin/init: no such file or directory: unknown.</code></p>
+<h4 id="产生原因-1"><a href="#产生原因-1" class="headerlink" title="产生原因"></a>产生原因</h4><p>​		这说明我们使用的Ubuntu映像没有init文件，需要我们自行添加</p>
+<p>​		<img src="/dbaf53d0/%E7%BC%BA%E5%B0%91init.png" class="" title="image-20230404220859176"></p>
+<h4 id="解决办法一：修改容器的启动配置"><a href="#解决办法一：修改容器的启动配置" class="headerlink" title="解决办法一：修改容器的启动配置"></a>解决办法一：修改容器的启动配置</h4><p>​		进入一个正常的Ubuntu系统，<code>cd /sbin</code>然后<code>ls -l|grep init</code>查看init文件，显示结果如下</p>
+   <img src="/dbaf53d0/%E6%AD%A3%E5%B8%B8%E7%9A%84init%E6%98%AF%E4%BB%80%E4%B9%88.png" class="" title="image-20230404221059062">
+
+<p>​		运行结果显示init文件实际上是systemd文件的<strong>软链接</strong>形式</p>
+<p>   <em>lrwxrwxrwx中第一个字母l代表该文件是一个软链接</em></p>
+<ol>
+<li><p>利用<strong>映像</strong>创建一个容器，并进入终端（或者直接进入旧容器）</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker run -tid --name ubuntu01  ubuntu</span><br><span class="line">docker exec -it ubuntu01 /bin/bash</span><br></pre></td></tr></table></figure></li>
+<li><p>使用<code>apt update&amp;&amp;apt upgrade</code>更新软件源</p>
+</li>
+<li><p>使用<code>apt install systemd</code>下载一个systemd到Linux系统</p>
+</li>
+<li><p>在&#x2F;sbin目录里建立一个名为init的软链接指向systemd,使用指令<code>ln -s /lib/systemd/systemd /sbin/init</code></p>
+</li>
+<li><p>退出容器的bash shell，使用<code>docker info</code>查看docker容器的存储位置，<em>例如：<code>Docker Root Dir: /volume1/@docker</code></em></p>
+</li>
+<li><p>进入docker 目录下的containers&#x2F;目录，找到跟容器id(<code>docker ps -a可以列出所有的容器相关信息</code>)相同的目录（或者可以使用<code>docker inspect &quot;容器名&quot;</code>查看和容器有关的信息）</p>
+</li>
+<li><p>ls 查看文件构造</p>
+<img src="/dbaf53d0/%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6.png" class="" title="image-20230404224428235">
+
+<p>config.v2.json即为配置文件</p>
+</li>
+<li><p><code>cp config.v2.json config.v2.json.origin</code>备份配置文件</p>
+</li>
+<li><p><code>vim config.v2.json</code>修改配置文件,将Path修改为”&#x2F;sbin&#x2F;init”,Cmd修改为”&#x2F;sbin&#x2F;init”，<strong>重点：”NoNewPrivileges”改为true，否则修改后的配置文件在启动容器后又会变回原样</strong><br>  <em>Path填写可执行程序,Args填写可执行程序的参数,Cmd完整的命令</em></p>
+</li>
+<li><p>输入<code>service docker restart</code>指令来重启docker<strong>注意是重启docker，而不是重启container</strong><br> 如果是群晖系统则需要使用</p>
+ <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">bash /var/packages/Docker/scripts/start-stop-status stop;</span><br><span class="line">bash /var/packages/Docker/scripts/start-stop-status start;</span><br></pre></td></tr></table></figure></li>
+</ol>
+<p>11.输入<code>docker start ubuntu01</code>来启动容器，输入<code>ps aux</code>查看进程，发现Ubuntu第一个进程为init，大功告成</p>
+<img src="/dbaf53d0/%E4%BF%AE%E6%94%B9%E6%88%90%E5%8A%9F.png" class="" title="image-20230405135253531">
+
+<h4 id="解决办法二：修改容器后，利用容器commit映像出来，再使用映像建立一个容器"><a href="#解决办法二：修改容器后，利用容器commit映像出来，再使用映像建立一个容器" class="headerlink" title="解决办法二：修改容器后，利用容器commit映像出来，再使用映像建立一个容器"></a>解决办法二：修改容器后，利用容器commit映像出来，再使用映像建立一个容器</h4><p><em>前四步都与解决方法一一致</em></p>
+<ol>
+<li><p>利用<strong>映像</strong>创建一个容器，并进入终端（或者直接进入旧容器）</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker run -tid --name ubuntu01  ubuntu</span><br><span class="line">docker exec -it ubuntu01 /bin/bash</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>使用<code>apt update&amp;&amp;apt upgrade</code>更新软件源</p>
+</li>
+<li><p>使用<code>apt install systemd</code>下载一个systemd到Linux系统</p>
+</li>
+<li><p>在&#x2F;sbin目录里建立一个名为init的软链接指向systemd,使用指令<code>ln -s /lib/systemd/systemd /sbin/init</code></p>
+</li>
+<li><p>退出容器，使用<code>docker commit ubuntu01 test</code>将修改好的容器ubuntu01 commit为test映像</p>
+</li>
+<li><p>这下利用test映像即可以使用代码而不报错</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker run -tid --name ubuntu02 --privileged=true test /sbin/init</span><br><span class="line">docker exec -it ubuntu02 /bin/bash</span><br></pre></td></tr></table></figure></li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Ubuntu/" rel="tag"># Ubuntu</a>
+              <a href="/tags/NAS/" rel="tag"># NAS</a>
+              <a href="/tags/Docker/" rel="tag"># Docker</a>
+              <a href="/tags/%E7%BE%A4%E6%99%96/" rel="tag"># 群晖</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/76f723b3.html" rel="prev" title="使用Vmware虚拟机无法ping通开发板">
+      <i class="fa fa-chevron-left"></i> 使用Vmware虚拟机无法ping通开发板
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/1dafad22.html" rel="next" title="校园网环境下访问群晖NAS">
+      校园网环境下访问群晖NAS <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E6%8F%8F%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">问题描述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%A7%E7%94%9F%E5%8E%9F%E5%9B%A0"><span class="nav-number">2.</span> <span class="nav-text">产生原因</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E5%8A%9E%E6%B3%95"><span class="nav-number">3.</span> <span class="nav-text">解决办法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81"><span class="nav-number">3.1.</span> <span class="nav-text">代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E8%A7%A3%E9%87%8A"><span class="nav-number">3.2.</span> <span class="nav-text">代码解释</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#docker-run-tid-name-ubuntu01-privileged-true-ubuntu-sbin-init"><span class="nav-number">3.2.1.</span> <span class="nav-text">docker run -tid --name ubuntu01 --privileged&#x3D;true ubuntu &#x2F;sbin&#x2F;init</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#docker-exec-it-ubuntu01-bin-bash"><span class="nav-number">3.2.2.</span> <span class="nav-text">docker exec -it ubuntu01 &#x2F;bin&#x2F;bash</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E6%AD%A3%E7%A1%AE%E8%BF%90%E8%A1%8C%E7%BB%93%E6%9E%9C"><span class="nav-number">3.3.</span> <span class="nav-text">代码正确运行结果</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%81%87%E5%A6%82Ubuntu%E7%9A%84-sbin-init%E6%96%87%E4%BB%B6%E4%B8%8D%E5%AD%98%E5%9C%A8"><span class="nav-number">3.4.</span> <span class="nav-text">假如Ubuntu的&#x2F;sbin&#x2F;init文件不存在</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E6%8F%8F%E8%BF%B0-1"><span class="nav-number">3.4.1.</span> <span class="nav-text">问题描述</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%A7%E7%94%9F%E5%8E%9F%E5%9B%A0-1"><span class="nav-number">3.4.2.</span> <span class="nav-text">产生原因</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E5%8A%9E%E6%B3%95%E4%B8%80%EF%BC%9A%E4%BF%AE%E6%94%B9%E5%AE%B9%E5%99%A8%E7%9A%84%E5%90%AF%E5%8A%A8%E9%85%8D%E7%BD%AE"><span class="nav-number">3.4.3.</span> <span class="nav-text">解决办法一：修改容器的启动配置</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E5%8A%9E%E6%B3%95%E4%BA%8C%EF%BC%9A%E4%BF%AE%E6%94%B9%E5%AE%B9%E5%99%A8%E5%90%8E%EF%BC%8C%E5%88%A9%E7%94%A8%E5%AE%B9%E5%99%A8commit%E6%98%A0%E5%83%8F%E5%87%BA%E6%9D%A5%EF%BC%8C%E5%86%8D%E4%BD%BF%E7%94%A8%E6%98%A0%E5%83%8F%E5%BB%BA%E7%AB%8B%E4%B8%80%E4%B8%AA%E5%AE%B9%E5%99%A8"><span class="nav-number">3.4.4.</span> <span class="nav-text">解决办法二：修改容器后，利用容器commit映像出来，再使用映像建立一个容器</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">水更流</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">21</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">36</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/0shuigengliu" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;0shuigengliu" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://space.bilibili.com/289595050" title="bilibili → https:&#x2F;&#x2F;space.bilibili.com&#x2F;289595050" rel="noopener" target="_blank"><i class="fa fa-fw fa-bilibili"></i>bilibili</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">水更流</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+<div class="powered-by">
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <i class="fa fa-user-md"></i>
+    <span id="busuanzi_container_site_uv">
+        本站访客数:<span id="busuanzi_value_site_uv"></span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span id="busuanzi_container_site_pv">
+        本站访问量<span id="busuanzi_value_site_pv"></span>
+    </span>
+</div>
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

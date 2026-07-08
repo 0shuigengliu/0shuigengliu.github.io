@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 8.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.shui2000.top","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="本篇文章主要介绍了校园网环境下访问群晖NAS的方法">
+<meta property="og:type" content="article">
+<meta property="og:title" content="校园网环境下访问群晖NAS">
+<meta property="og:url" content="https://www.shui2000.top/1dafad22.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="本篇文章主要介绍了校园网环境下访问群晖NAS的方法">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.shui2000.top/1dafad22/%E6%A0%A1%E5%9B%AD%E7%BD%91%E8%AE%A4%E8%AF%81.png">
+<meta property="og:image" content="https://www.shui2000.top/1dafad22/huaji.jpg">
+<meta property="og:image" content="https://www.shui2000.top/1dafad22/%E5%9C%B0%E5%9D%80%E7%BB%91%E5%AE%9A.png">
+<meta property="og:image" content="https://www.shui2000.top/1dafad22/%E7%AB%AF%E5%8F%A3%E8%BD%AC%E5%8F%91.png">
+<meta property="og:image" content="https://www.shui2000.top/1dafad22/%E5%AE%89%E8%A3%85%E5%A5%97%E4%BB%B6.png">
+<meta property="og:image" content="https://www.shui2000.top/1dafad22/Tailscale%E7%99%BB%E9%99%86%E6%88%90%E5%8A%9F.png">
+<meta property="article:published_time" content="2023-04-07T08:02:30.000Z">
+<meta property="article:modified_time" content="2023-04-07T08:02:30.000Z">
+<meta property="article:author" content="水更流">
+<meta property="article:tag" content="NAS">
+<meta property="article:tag" content="Tailscale">
+<meta property="article:tag" content="校园网">
+<meta property="article:tag" content="群晖">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.shui2000.top/1dafad22/%E6%A0%A1%E5%9B%AD%E7%BD%91%E8%AE%A4%E8%AF%81.png">
+
+<link rel="canonical" href="https://www.shui2000.top/1dafad22.html">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>校园网环境下访问群晖NAS | Hexo</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Hexo</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.shui2000.top/1dafad22.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="水更流">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hexo">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          校园网环境下访问群晖NAS
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-04-07 16:02:30" itemprop="dateCreated datePublished" datetime="2023-04-07T16:02:30+08:00">2023-04-07</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%9E%8E%E6%8A%98%E8%85%BE/" itemprop="url" rel="index"><span itemprop="name">瞎折腾</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">本篇文章主要介绍了校园网环境下访问群晖NAS的方法</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="遇到的困难"><a href="#遇到的困难" class="headerlink" title="遇到的困难"></a>遇到的困难</h2><ol>
+<li><p>连接网络；群晖本身是不能够连接显示屏进行使用的，需要我们知道IP地址，在同一个局域网的电脑上登陆操作，</p>
+<p>但本人所在的校园网需要使用web进行网页认证*（深澜校园网）<em>，所以我们*<em>需要一个路由器</em></em>，通过路由器认证校园网，然后连接群晖的方式将其接入网络。</p>
+<img src="/1dafad22/%E6%A0%A1%E5%9B%AD%E7%BD%91%E8%AE%A4%E8%AF%81.png" class="" title="image-20230407161913014">
+</li>
+<li><p>外部访问；由于我们使用路由器连接群晖，导致群晖本身处于校园网更下层的一个局域网中，同在一个校园网中的设备无法直接访问群晖，我准备了两种方式来解决这个问题：DMZ端口转发与Tailscale连接。</p>
+</li>
+<li><p>宿舍晚上断电，无解，或者去把厕所灯偷偷接到宿舍里,实现宿舍不断电<img src="/1dafad22/huaji.jpg" class="" title="huaji15"></p>
+</li>
+</ol>
+<h2 id="需要准备的东西"><a href="#需要准备的东西" class="headerlink" title="需要准备的东西"></a>需要准备的东西</h2><p>电脑一台，路由器一个（本人用的E2633），网线两根（一根连接校园网，一根连接群晖）</p>
+<h2 id="连接群晖"><a href="#连接群晖" class="headerlink" title="连接群晖"></a>连接群晖</h2><p>​		<strong>在路由器连接校园网的时候，要先查资料再行动，如果路由器配置不当，可能导致整个宿舍楼断网</strong></p>
+<p>​		路由器E2633本身支持的网络认证方式有PPPOE拨号连接，DHCP连接，桥接模式，Mesh组网</p>
+<p>​		经过尝试，我选择使用了DHCP连接的方式。</p>
+<blockquote>
+<p>E2633的DHCP连接方式本身存在BUG，如果我们在重置路由器后，在引导向导里面选择DHCP连接方式后，随后WIFI是没有网的，而且我们选择修改WIFI名称也没有作用，（当时我差点把货退了）<br>所以E2633需要在启动时先跳过向导，之后在上网设置后进行DHCP相关配置</p>
+</blockquote>
+<p>​		将校园网网线接入到路由器<strong>WAN口</strong>当中，设置为路由器为<strong>自动获取DHCP</strong>模式，电脑或者手机连接到路由器WIFI后，输入校园网认证地址后进行认证，成功之后，其他设备（比如群晖）连接路由器不需要认证即可上网。但是如果宿舍网上断电，第二天需要重新认证。</p>
+<p>将群晖接入路由器后，在路由器后台查看ip地址，即可连接。</p>
+<blockquote>
+<p><strong>注意：如果使用桥接模式，需要提前关闭自己路由器DHCP服务，再将网线接入到路由器LAN口当中</strong><br><strong>桥接模式先关DHCP自动下发！桥接模式先关DHCP自动下发！桥接模式先关DHCP自动下发！重要的事情说三遍！</strong></p>
+<p>原因：<br>	桥接模式下如果不关路由器自身的DHCP服务，那么桥接后的网络中就会存在两个下发ip地址的路由器，当手机连接到WIFI后，分配到的ip地址如果是主路由器（学校的路由器）下发的ip地址，那么就可以正常上网，如果是从路由器（你的路由器）下发的ip地址，那么就无法上网，而且分配到哪个路由器下发的ip地址，全凭运气。</p>
+</blockquote>
+<h2 id="外部访问群晖"><a href="#外部访问群晖" class="headerlink" title="外部访问群晖"></a>外部访问群晖</h2><h3 id="方法一：DMZ端口转发"><a href="#方法一：DMZ端口转发" class="headerlink" title="方法一：DMZ端口转发"></a>方法一：DMZ端口转发</h3><h4 id="优点：设置简单，使用ftp服务与别人传文件比较方便"><a href="#优点：设置简单，使用ftp服务与别人传文件比较方便" class="headerlink" title="优点：设置简单，使用ftp服务与别人传文件比较方便"></a><strong>优点</strong>：设置简单，使用ftp服务与别人传文件比较方便</h4><h4 id="缺点：安全系数低，路由器的ip地址可能会变，只能在校园网中使用"><a href="#缺点：安全系数低，路由器的ip地址可能会变，只能在校园网中使用" class="headerlink" title="缺点：安全系数低，路由器的ip地址可能会变，只能在校园网中使用"></a><strong>缺点</strong>：安全系数低，路由器的ip地址可能会变，只能在校园网中使用</h4><p>​		DMZ端口转发需要在路由器的DHCP中给群晖设置一个静态IP地址，并通过DMZ端口映射到校园网当中，这样只要知道路由器在校园网中的ip地址，访问路由器即可以访问到群晖系统。</p>
+<p>​		但是校园网一般都是DHCP下发IP地址的，一定时间内会根据MAC地址给同一设备分配相同的IP地址，但是这不是绝对的，IP地址仍可能会变</p>
+<h4 id="操作步骤："><a href="#操作步骤：" class="headerlink" title="操作步骤："></a>操作步骤：</h4><p>​		1.进入路由器管理后台，给群晖NAS绑定一个静态IP地址，我这里绑定的是192.168.10.13</p>
+<img src="/1dafad22/%E5%9C%B0%E5%9D%80%E7%BB%91%E5%AE%9A.png" class="" title="image-20230407152856475">
+
+<p>​		2.设置DMZ端口转发<img src="/1dafad22/%E7%AB%AF%E5%8F%A3%E8%BD%AC%E5%8F%91.png" class="" title="image-20230407152915840"></p>
+<p>​		3.通过访问路由器的ip地址即可以访问到群晖</p>
+<h3 id="方法二：-Tailscale进行外网访问（推荐）"><a href="#方法二：-Tailscale进行外网访问（推荐）" class="headerlink" title="方法二： Tailscale进行外网访问（推荐）"></a>方法二： Tailscale进行外网访问（推荐）</h3><blockquote>
+<p> What is Tailscale?</p>
+<p>Tailscale is a VPN service that makes the devices and applications you own accessible anywhere in the world, securely and effortlessly. It enables encrypted point-to-point connections using the open source <a target="_blank" rel="noopener" href="https://www.wireguard.com/">WireGuard</a> protocol, which means only devices on your private network can communicate with each other.</p>
+<p>—- 摘录自<a target="_blank" rel="noopener" href="https://tailscale.com/kb/1151/what-is-tailscale/">Tailscale官网</a></p>
+<p>个人渣翻：</p>
+<p>什么是Tailscale？</p>
+<p>Tailscale是一个可以让你在世界任何一个角落安全高效地连接你所拥有的设备的VPN服务，它使用了 <a target="_blank" rel="noopener" href="https://www.wireguard.com/">WireGuard</a> 开源协议实现了加密点对点连接，只有你的私人设备之间才能相互连接</p>
+</blockquote>
+<h5 id="优点：可以在校园网外连接群晖NAS，设置好后ip地址不会改变"><a href="#优点：可以在校园网外连接群晖NAS，设置好后ip地址不会改变" class="headerlink" title="优点：可以在校园网外连接群晖NAS，设置好后ip地址不会改变"></a><strong>优点</strong>：可以在校园网外连接群晖NAS，设置好后ip地址不会改变</h5><h5 id="缺点：设置比较繁琐（相较于方法一）"><a href="#缺点：设置比较繁琐（相较于方法一）" class="headerlink" title="缺点：设置比较繁琐（相较于方法一）"></a><strong>缺点</strong>：设置比较繁琐（相较于方法一）</h5><h5 id="操作步骤：-1"><a href="#操作步骤：-1" class="headerlink" title="操作步骤："></a>操作步骤：</h5><ol>
+<li><p>进入Tailscale-synology的<a target="_blank" rel="noopener" href="https://pkgs.tailscale.com/stable/#spks">官方源</a>下载SPK包，其他系统使用<a target="_blank" rel="noopener" href="https://pkgs.tailscale.com/stable/">这个地址</a></p>
+</li>
+<li><p>在群晖套件中心安装spk包</p>
+<img src="/1dafad22/%E5%AE%89%E8%A3%85%E5%A5%97%E4%BB%B6.png" class="" title="image-20230407153624640">
+</li>
+<li><p>安装好后，打开Tailsscale进行登录，可以选择Google与微软账号，这里我推荐使用微软账号，使用Google账号会使得IPad上面的Tailscale经常需要重新登录，而微软账号则不会。</p>
+</li>
+<li><p>在其他设备(电脑，ipad，手机)上安装Tailscale*(Ipad中的这个应用需要在美区的商店进行下载，只需要修改苹果账号的国家与地区就可以，不需要翻墙)*，并登录同一个账号。</p>
+</li>
+<li><p>同时登录了同一个账号的Tailscale的设备则会被认为处在 同一个局域网中，通过Tailscale提供的ip地址即可以访问群晖</p>
+<img src="/1dafad22/Tailscale%E7%99%BB%E9%99%86%E6%88%90%E5%8A%9F.png" class="" title="image-20230407160000641"></li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/NAS/" rel="tag"># NAS</a>
+              <a href="/tags/%E7%BE%A4%E6%99%96/" rel="tag"># 群晖</a>
+              <a href="/tags/%E6%A0%A1%E5%9B%AD%E7%BD%91/" rel="tag"># 校园网</a>
+              <a href="/tags/Tailscale/" rel="tag"># Tailscale</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/dbaf53d0.html" rel="prev" title="Docker中的Ubuntu无法正常使用systemctl操作">
+      <i class="fa fa-chevron-left"></i> Docker中的Ubuntu无法正常使用systemctl操作
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/63798680.html" rel="next" title="数组相关算法">
+      数组相关算法 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%81%87%E5%88%B0%E7%9A%84%E5%9B%B0%E9%9A%BE"><span class="nav-number">1.</span> <span class="nav-text">遇到的困难</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%9C%80%E8%A6%81%E5%87%86%E5%A4%87%E7%9A%84%E4%B8%9C%E8%A5%BF"><span class="nav-number">2.</span> <span class="nav-text">需要准备的东西</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%9E%E6%8E%A5%E7%BE%A4%E6%99%96"><span class="nav-number">3.</span> <span class="nav-text">连接群晖</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%96%E9%83%A8%E8%AE%BF%E9%97%AE%E7%BE%A4%E6%99%96"><span class="nav-number">4.</span> <span class="nav-text">外部访问群晖</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%B9%E6%B3%95%E4%B8%80%EF%BC%9ADMZ%E7%AB%AF%E5%8F%A3%E8%BD%AC%E5%8F%91"><span class="nav-number">4.1.</span> <span class="nav-text">方法一：DMZ端口转发</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BC%98%E7%82%B9%EF%BC%9A%E8%AE%BE%E7%BD%AE%E7%AE%80%E5%8D%95%EF%BC%8C%E4%BD%BF%E7%94%A8ftp%E6%9C%8D%E5%8A%A1%E4%B8%8E%E5%88%AB%E4%BA%BA%E4%BC%A0%E6%96%87%E4%BB%B6%E6%AF%94%E8%BE%83%E6%96%B9%E4%BE%BF"><span class="nav-number">4.1.1.</span> <span class="nav-text">优点：设置简单，使用ftp服务与别人传文件比较方便</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%BC%BA%E7%82%B9%EF%BC%9A%E5%AE%89%E5%85%A8%E7%B3%BB%E6%95%B0%E4%BD%8E%EF%BC%8C%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9A%84ip%E5%9C%B0%E5%9D%80%E5%8F%AF%E8%83%BD%E4%BC%9A%E5%8F%98%EF%BC%8C%E5%8F%AA%E8%83%BD%E5%9C%A8%E6%A0%A1%E5%9B%AD%E7%BD%91%E4%B8%AD%E4%BD%BF%E7%94%A8"><span class="nav-number">4.1.2.</span> <span class="nav-text">缺点：安全系数低，路由器的ip地址可能会变，只能在校园网中使用</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%93%8D%E4%BD%9C%E6%AD%A5%E9%AA%A4%EF%BC%9A"><span class="nav-number">4.1.3.</span> <span class="nav-text">操作步骤：</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%B9%E6%B3%95%E4%BA%8C%EF%BC%9A-Tailscale%E8%BF%9B%E8%A1%8C%E5%A4%96%E7%BD%91%E8%AE%BF%E9%97%AE%EF%BC%88%E6%8E%A8%E8%8D%90%EF%BC%89"><span class="nav-number">4.2.</span> <span class="nav-text">方法二： Tailscale进行外网访问（推荐）</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%BC%98%E7%82%B9%EF%BC%9A%E5%8F%AF%E4%BB%A5%E5%9C%A8%E6%A0%A1%E5%9B%AD%E7%BD%91%E5%A4%96%E8%BF%9E%E6%8E%A5%E7%BE%A4%E6%99%96NAS%EF%BC%8C%E8%AE%BE%E7%BD%AE%E5%A5%BD%E5%90%8Eip%E5%9C%B0%E5%9D%80%E4%B8%8D%E4%BC%9A%E6%94%B9%E5%8F%98"><span class="nav-number">4.2.1.</span> <span class="nav-text">优点：可以在校园网外连接群晖NAS，设置好后ip地址不会改变</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%BC%BA%E7%82%B9%EF%BC%9A%E8%AE%BE%E7%BD%AE%E6%AF%94%E8%BE%83%E7%B9%81%E7%90%90%EF%BC%88%E7%9B%B8%E8%BE%83%E4%BA%8E%E6%96%B9%E6%B3%95%E4%B8%80%EF%BC%89"><span class="nav-number">4.2.2.</span> <span class="nav-text">缺点：设置比较繁琐（相较于方法一）</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%93%8D%E4%BD%9C%E6%AD%A5%E9%AA%A4%EF%BC%9A-1"><span class="nav-number">4.2.3.</span> <span class="nav-text">操作步骤：</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">水更流</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">21</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">36</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/0shuigengliu" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;0shuigengliu" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://space.bilibili.com/289595050" title="bilibili → https:&#x2F;&#x2F;space.bilibili.com&#x2F;289595050" rel="noopener" target="_blank"><i class="fa fa-fw fa-bilibili"></i>bilibili</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">水更流</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+<div class="powered-by">
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <i class="fa fa-user-md"></i>
+    <span id="busuanzi_container_site_uv">
+        本站访客数:<span id="busuanzi_value_site_uv"></span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span id="busuanzi_container_site_pv">
+        本站访问量<span id="busuanzi_value_site_pv"></span>
+    </span>
+</div>
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

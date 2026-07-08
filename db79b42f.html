@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 8.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.shui2000.top","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="题目来自于力扣，题目前的序号为力扣题目编号，题目顺序根据代码随想录https:&#x2F;&#x2F;programmercarl.com&#x2F;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="链表相关算法">
+<meta property="og:url" content="https://www.shui2000.top/db79b42f.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="题目来自于力扣，题目前的序号为力扣题目编号，题目顺序根据代码随想录https:&#x2F;&#x2F;programmercarl.com&#x2F;">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.shui2000.top/db79b42f/%E7%A7%BB%E9%99%A4%E9%93%BE%E8%A1%A8%E5%85%83%E7%B4%A0.png">
+<meta property="og:image" content="https://www.shui2000.top/db79b42f/%E9%93%BE%E8%A1%A8%E7%9B%B8%E4%BA%A4.png">
+<meta property="og:image" content="https://www.shui2000.top/db79b42f/%E9%93%BE%E8%A1%A8%E7%9B%B8%E4%BA%A4%E7%A4%BA%E4%BE%8B1.png">
+<meta property="og:image" content="https://www.shui2000.top/db79b42f/%E9%93%BE%E8%A1%A8%E7%9B%B8%E4%BA%A4%E7%A4%BA%E4%BE%8B2.png">
+<meta property="og:image" content="https://www.shui2000.top/db79b42f/%E9%93%BE%E8%A1%A8%E7%9B%B8%E4%BA%A4%E7%A4%BA%E4%BE%8B3.png">
+<meta property="article:published_time" content="2023-04-21T08:21:30.000Z">
+<meta property="article:modified_time" content="2026-07-08T16:55:35.110Z">
+<meta property="article:author" content="水更流">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="算法">
+<meta property="article:tag" content="链表">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.shui2000.top/db79b42f/%E7%A7%BB%E9%99%A4%E9%93%BE%E8%A1%A8%E5%85%83%E7%B4%A0.png">
+
+<link rel="canonical" href="https://www.shui2000.top/db79b42f.html">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>链表相关算法 | Hexo</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Hexo</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.shui2000.top/db79b42f.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="水更流">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hexo">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          链表相关算法
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-04-21 16:21:30" itemprop="dateCreated datePublished" datetime="2023-04-21T16:21:30+08:00">2023-04-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2026-07-09 00:55:35" itemprop="dateModified" datetime="2026-07-09T00:55:35+08:00">2026-07-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%AE%97%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">算法</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">题目来自于力扣，题目前的序号为力扣题目编号，题目顺序根据代码随想录https://programmercarl.com/</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="注意"><a href="#注意" class="headerlink" title="注意"></a>注意</h2><ol>
+<li>链表的使用中<strong>可以设置一个虚拟头结点</strong>，这样原链表的所有节点就都可以按照统一的方式进行移除了</li>
+<li>链表的使用要注意使用p&#x3D;p-&gt;next;因为p为nullptr时，p-&gt;next会造成内存溢出</li>
+<li>注意移除链表元素后删除元素，回收空间</li>
+</ol>
+<h2 id="203-移除链表元素"><a href="#203-移除链表元素" class="headerlink" title="203.移除链表元素"></a>203.移除链表元素</h2><p><a target="_blank" rel="noopener" href="https://leetcode.cn/problems/remove-linked-list-elements/">题目链接</a></p>
+<blockquote>
+<p>给你一个链表的头节点 head 和一个整数 val ，请你删除链表中所有满足 Node.val &#x3D;&#x3D; val 的节点，并返回 新的头节点 。</p>
+<img src="/db79b42f/%E7%A7%BB%E9%99%A4%E9%93%BE%E8%A1%A8%E5%85%83%E7%B4%A0.png" class="" title="image-20230414213413695">
+
+<p>示例 1：<br>输入：head &#x3D; [1,2,6,3,4,5,6], val &#x3D; 6<br>输出：[1,2,3,4,5]<br>示例 2：<br>输入：head &#x3D; [], val &#x3D; 1<br>输出：[]<br>示例 3：<br>输入：head &#x3D; [7,7,7,7], val &#x3D; 7<br>输出：[]</p>
+</blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Definition for singly-linked list.</span></span><br><span class="line"><span class="comment"> * struct ListNode &#123;</span></span><br><span class="line"><span class="comment"> *     int val;</span></span><br><span class="line"><span class="comment"> *     ListNode *next;</span></span><br><span class="line"><span class="comment"> *     ListNode() : val(0), next(nullptr) &#123;&#125;</span></span><br><span class="line"><span class="comment"> *     ListNode(int x) : val(x), next(nullptr) &#123;&#125;</span></span><br><span class="line"><span class="comment"> *     ListNode(int x, ListNode *next) : val(x), next(next) &#123;&#125;</span></span><br><span class="line"><span class="comment"> * &#125;;</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"> <span class="function">ListNode *<span class="title">removeElements</span><span class="params">(ListNode *head, <span class="type">int</span> val)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ListNode *L = <span class="keyword">new</span> <span class="built_in">ListNode</span>();</span><br><span class="line">    L-&gt;next = head;<span class="comment">//使用头节点可以让</span></span><br><span class="line">    ListNode *p = L;</span><br><span class="line">    ListNode *q;</span><br><span class="line">    p = L;</span><br><span class="line">    <span class="keyword">while</span> (p-&gt;next)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (p-&gt;next-&gt;val == val)</span><br><span class="line">        &#123;</span><br><span class="line">            q=p-&gt;next;</span><br><span class="line">            p-&gt;next = p-&gt;next-&gt;next;</span><br><span class="line">            <span class="keyword">delete</span> q;<span class="comment">//删除元素回收空间</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">        &#123;</span><br><span class="line">            p = p-&gt;next;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> L-&gt;next;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="206-反转链表"><a href="#206-反转链表" class="headerlink" title="206. 反转链表"></a>206. 反转链表</h2><p><a target="_blank" rel="noopener" href="https://leetcode.cn/problems/reverse-linked-list/">链接</a></p>
+<blockquote>
+<p>给你单链表的头节点 head ，请你反转链表，并返回反转后的链表。</p>
+<p>示例 1：</p>
+<p>输入：head &#x3D; [1,2,3,4,5]<br>输出：[5,4,3,2,1]<br>示例 2：</p>
+<p>输入：head &#x3D; [1,2]<br>输出：[2,1]<br>示例 3：</p>
+<p>输入：head &#x3D; []<br>输出：[]</p>
+</blockquote>
+<h3 id="虚拟头节点"><a href="#虚拟头节点" class="headerlink" title="虚拟头节点"></a>虚拟头节点</h3><p>遍历整个链表，基于<strong>头插法</strong>的思想重新构建链表</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">ListNode *<span class="title">reverseList</span><span class="params">(ListNode *head)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ListNode *L =<span class="keyword">new</span> <span class="built_in">ListNode</span>();</span><br><span class="line">    ListNode *p =<span class="keyword">new</span> <span class="built_in">ListNode</span>();</span><br><span class="line">    ListNode *q =<span class="keyword">new</span> <span class="built_in">ListNode</span>();</span><br><span class="line">    p=head;</span><br><span class="line">    <span class="keyword">while</span>(p)&#123;</span><br><span class="line">        q=p-&gt;next;</span><br><span class="line">        p-&gt;next=L-&gt;next;</span><br><span class="line">        L-&gt;next=p;</span><br><span class="line">        p=q;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> L-&gt;next;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="双指针法"><a href="#双指针法" class="headerlink" title="双指针法"></a>双指针法</h3><p>利用双指针，遍历修改，例如 原本节点的关系为 pre-&gt;cur 双指针修改为 pre&lt;-cur</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">ListNode *<span class="title">reverseList</span><span class="params">(ListNode *head)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ListNode *pre=<span class="literal">nullptr</span>;</span><br><span class="line">    ListNode *cur=head;</span><br><span class="line">    <span class="keyword">while</span>(cur)&#123;</span><br><span class="line">        ListNode *temp=cur-&gt;next;</span><br><span class="line">        cur-&gt;next=pre;</span><br><span class="line">        pre=cur;</span><br><span class="line">        cur=temp;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> pre;<span class="comment">//最后cur指向了空指针，pre指向了原本的最后一个节点</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="24-两两交换链表中的节点"><a href="#24-两两交换链表中的节点" class="headerlink" title="24. 两两交换链表中的节点"></a>24. 两两交换链表中的节点</h2><p><a target="_blank" rel="noopener" href="https://leetcode.cn/problems/swap-nodes-in-pairs/">题目链接</a></p>
+<blockquote>
+<p>给你一个链表，两两交换其中相邻的节点，并返回交换后链表的头节点。你必须在不修改节点内部的值的情况下完成本题（即，只能进行节点交换）。</p>
+<p>示例 1：</p>
+<p>输入：head &#x3D; [1,2,3,4]<br>输出：[2,1,4,3]<br>示例 2：</p>
+<p>输入：head &#x3D; []<br>输出：[]<br>示例 3：</p>
+<p>输入：head &#x3D; [1]<br>输出：[1]</p>
+</blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">ListNode *<span class="title">swapPairs</span><span class="params">(ListNode *head)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ListNode *L = <span class="keyword">new</span> <span class="built_in">ListNode</span>();</span><br><span class="line">    L-&gt;next = head;</span><br><span class="line">    ListNode *cur = L-&gt;next;</span><br><span class="line">    ListNode *pre = L;</span><br><span class="line">    <span class="keyword">while</span> (cur &amp;&amp; cur-&gt;next)</span><br><span class="line">    &#123;</span><br><span class="line">        ListNode *temp = pre;</span><br><span class="line">        pre = cur;</span><br><span class="line">        cur = cur-&gt;next;</span><br><span class="line">        <span class="comment">// 此时 temp-&gt;pre-&gt;cur-&gt;nullptr</span></span><br><span class="line">        pre-&gt;next = cur-&gt;next;</span><br><span class="line">        cur-&gt;next = pre;</span><br><span class="line">        temp-&gt;next = cur;</span><br><span class="line">        <span class="comment">// 此时 temp-&gt;cur-&gt;pre</span></span><br><span class="line"></span><br><span class="line">        cur = pre-&gt;next;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> L-&gt;next;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="19-删除链表的倒数第N个节点"><a href="#19-删除链表的倒数第N个节点" class="headerlink" title="19.删除链表的倒数第N个节点"></a>19.删除链表的倒数第N个节点</h2><p><a target="_blank" rel="noopener" href="https://leetcode.cn/problems/remove-nth-node-from-end-of-list/">题目链接</a></p>
+<blockquote>
+<p>给你一个链表，删除链表的倒数第 <code>n</code> 个结点，并且返回链表的头结点。</p>
+<p><strong>进阶：一次扫描实现</strong></p>
+<p>示例 1：</p>
+<p>输入：head &#x3D; [1,2,3,4,5], n &#x3D; 2<br>输出：[1,2,3,5]<br>示例 2：</p>
+<p>输入：head &#x3D; [1], n &#x3D; 1<br>输出：[]<br>示例 3：</p>
+<p>输入：head &#x3D; [1,2], n &#x3D; 1<br>输出：[1]</p>
+</blockquote>
+<h3 id="双指针"><a href="#双指针" class="headerlink" title="双指针"></a>双指针</h3><p>思路：要求删除第n个节点，那么设置快慢两个指针，二者相差为n+1，同时遍历，当快指针遍历完时，慢指针即为倒数第n-1个节点</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">ListNode *<span class="title">removeNthFromEnd</span><span class="params">(ListNode *head, <span class="type">int</span> n)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ListNode *L = <span class="keyword">new</span> <span class="built_in">ListNode</span>();</span><br><span class="line">    L-&gt;next = head;</span><br><span class="line">    ListNode *fast = L;</span><br><span class="line">    ListNode *slow = L;</span><br><span class="line">    <span class="type">int</span> num = n + <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">while</span> (num &gt; <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        fast = fast-&gt;next;</span><br><span class="line">        num--;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">while</span> (fast)</span><br><span class="line">    &#123;</span><br><span class="line">        fast = fast-&gt;next;</span><br><span class="line">        slow = slow-&gt;next;</span><br><span class="line">    &#125;</span><br><span class="line">    fast = slow-&gt;next;</span><br><span class="line">    slow-&gt;next = fast-&gt;next;</span><br><span class="line">    <span class="keyword">delete</span> fast;</span><br><span class="line">    <span class="keyword">return</span> L-&gt;next;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="面试题-02-07-链表相交"><a href="#面试题-02-07-链表相交" class="headerlink" title="面试题 02.07. 链表相交"></a>面试题 02.07. 链表相交</h2><p><a target="_blank" rel="noopener" href="https://leetcode.cn/problems/intersection-of-two-linked-lists-lcci/">题目链接</a></p>
+<blockquote>
+<p>给你两个单链表的头节点 headA 和 headB ，请你找出并返回两个单链表相交的起始节点。如果两个链表没有交点，返回 null 。</p>
+<p>图示两个链表在节点 c1 开始相交：</p>
+<img src="/db79b42f/%E9%93%BE%E8%A1%A8%E7%9B%B8%E4%BA%A4.png" class="" title="image-20230419214921678">
+
+<p>题目数据 保证 整个链式结构中不存在环。</p>
+<p>注意，函数返回结果后，链表必须 保持其原始结构 。</p>
+<p>示例 1：</p>
+<img src="/db79b42f/%E9%93%BE%E8%A1%A8%E7%9B%B8%E4%BA%A4%E7%A4%BA%E4%BE%8B1.png" class="" title="image-20230419214951242">
+
+<p>输入：intersectVal &#x3D; 8, listA &#x3D; [4,1,8,4,5], listB &#x3D; [5,0,1,8,4,5], skipA &#x3D; 2, skipB &#x3D; 3<br>输出：Intersected at ‘8’<br>解释：相交节点的值为 8 （注意，如果两个链表相交则不能为 0）。<br>从各自的表头开始算起，链表 A 为 [4,1,8,4,5]，链表 B 为 [5,0,1,8,4,5]。<br>在 A 中，相交节点前有 2 个节点；在 B 中，相交节点前有 3 个节点。<br>示例 2：</p>
+<img src="/db79b42f/%E9%93%BE%E8%A1%A8%E7%9B%B8%E4%BA%A4%E7%A4%BA%E4%BE%8B2.png" class="" title="image-20230419215009981">
+
+<p>输入：intersectVal &#x3D; 2, listA &#x3D; [0,9,1,2,4], listB &#x3D; [3,2,4], skipA &#x3D; 3, skipB &#x3D; 1<br>输出：Intersected at ‘2’<br>解释：相交节点的值为 2 （注意，如果两个链表相交则不能为 0）。<br>从各自的表头开始算起，链表 A 为 [0,9,1,2,4]，链表 B 为 [3,2,4]。<br>在 A 中，相交节点前有 3 个节点；在 B 中，相交节点前有 1 个节点。<br>示例 3：</p>
+<img src="/db79b42f/%E9%93%BE%E8%A1%A8%E7%9B%B8%E4%BA%A4%E7%A4%BA%E4%BE%8B3.png" class="" title="image-20230419215018099">
+
+<p>输入：intersectVal &#x3D; 0, listA &#x3D; [2,6,4], listB &#x3D; [1,5], skipA &#x3D; 3, skipB &#x3D; 2<br>输出：null<br>解释：从各自的表头开始算起，链表 A 为 [2,6,4]，链表 B 为 [1,5]。<br>由于这两个链表不相交，所以 intersectVal 必须为 0，而 skipA 和 skipB 可以是任意值。<br>这两个链表不相交，因此返回 null 。</p>
+</blockquote>
+<h3 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h3><p>可以计算出两个链表的长度，然后每个链表都有一个对应的指针，使指向的节点到链表末尾的链表长度相等</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">ListNode *<span class="title">getIntersectionNode</span><span class="params">(ListNode *headA, ListNode *headB)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> numa = <span class="number">0</span>, numb = <span class="number">0</span>;</span><br><span class="line">    ListNode *p = headA;</span><br><span class="line">    ListNode *q = headB;</span><br><span class="line">    <span class="type">int</span> length = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (p)</span><br><span class="line">    &#123;</span><br><span class="line">        numa++;</span><br><span class="line">        p = p-&gt;next;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">while</span> (q)</span><br><span class="line">    &#123;</span><br><span class="line">        numb++;</span><br><span class="line">        q = q-&gt;next;</span><br><span class="line">    &#125;</span><br><span class="line">    p = headA;</span><br><span class="line">    q = headB;</span><br><span class="line">    <span class="keyword">if</span> (numa &gt; numb)</span><br><span class="line">    &#123;</span><br><span class="line">        length = numa - numb;</span><br><span class="line">        <span class="keyword">while</span> (length)</span><br><span class="line">        &#123;</span><br><span class="line">            p = p-&gt;next;</span><br><span class="line">            length--;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        length = numb - numa;</span><br><span class="line">        <span class="keyword">while</span> (length)</span><br><span class="line">        &#123;</span><br><span class="line">            q = q-&gt;next;</span><br><span class="line">            length--;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">while</span> (p)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (p == q)</span><br><span class="line">            <span class="keyword">return</span> p;</span><br><span class="line">        p = p-&gt;next;</span><br><span class="line">        q = q-&gt;next;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="142-环形链表-Ⅱ"><a href="#142-环形链表-Ⅱ" class="headerlink" title="142.环形链表 Ⅱ"></a>142.环形链表 Ⅱ</h2><p><a target="_blank" rel="noopener" href="https://leetcode.cn/problems/linked-list-cycle-ii/">题目链接</a></p>
+<blockquote>
+<p>给定一个链表的头节点  head ，返回链表开始入环的第一个节点。 如果链表无环，则返回 null。</p>
+<p>如果链表中有某个节点，可以通过连续跟踪 next 指针再次到达，则链表中存在环。 为了表示给定链表中的环，评测系统内部使用整数 pos 来表示链表尾连接到链表中的位置（索引从 0 开始）。如果 pos 是 -1，则在该链表中没有环。注意：pos 不作为参数进行传递，仅仅是为了标识链表的实际情况。</p>
+<p>不允许修改 链表。</p>
+<p>示例 1：</p>
+
+
+<p>输入：head &#x3D; [3,2,0,-4], pos &#x3D; 1<br>输出：返回索引为 1 的链表节点<br>解释：链表中有一个环，其尾部连接到第二个节点。<br>示例 2：</p>
+
+
+<p>输入：head &#x3D; [1,2], pos &#x3D; 0<br>输出：返回索引为 0 的链表节点<br>解释：链表中有一个环，其尾部连接到第一个节点。<br>示例 3：</p>
+
+
+<p>输入：head &#x3D; [1], pos &#x3D; -1<br>输出：返回 null<br>解释：链表中没有环。</p>
+</blockquote>
+<h3 id="思路-1"><a href="#思路-1" class="headerlink" title="思路"></a>思路</h3><p>如果链表存在环，那么设定一个每次行走2个节点的fast指针，一个每次行走1个节点的slow指针，这两个指针速度相差1，那么指针一定会在循环链表中相遇*（操场跑步的时候，时间一直走，速度快的人一定会和速度慢的人相遇（套圈））*</p>
+
+
+<p>根据推导，我们可以看出如果重新设定一个从head节点出发的指针，一个从fast和slow节点相遇的结点出发的指针，两个指针的移动速度相同，他们<strong>一定会在环的入口处相遇</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">ListNode *detectCycle(ListNode *head)</span><br><span class="line">&#123;</span><br><span class="line">    ListNode *fast = head;</span><br><span class="line">    ListNode *slow = head;</span><br><span class="line">    while (fast &amp;&amp; fast-&gt;next)</span><br><span class="line">    &#123;</span><br><span class="line">        fast = fast-&gt;next-&gt;next;</span><br><span class="line">        slow = slow-&gt;next;</span><br><span class="line">        if (fast == slow)</span><br><span class="line">        &#123;</span><br><span class="line">            fast = head;</span><br><span class="line">            while (fast != slow)</span><br><span class="line">            &#123;</span><br><span class="line">                fast = fast-&gt;next;</span><br><span class="line">                slow = slow-&gt;next;</span><br><span class="line">            &#125;</span><br><span class="line">            return fast;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    return nullptr;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"># C++</a>
+              <a href="/tags/%E7%AE%97%E6%B3%95/" rel="tag"># 算法</a>
+              <a href="/tags/%E9%93%BE%E8%A1%A8/" rel="tag"># 链表</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/63798680.html" rel="prev" title="数组相关算法">
+      <i class="fa fa-chevron-left"></i> 数组相关算法
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/626b2962.html" rel="next" title="群晖的基础玩法">
+      群晖的基础玩法 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B3%A8%E6%84%8F"><span class="nav-number">1.</span> <span class="nav-text">注意</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#203-%E7%A7%BB%E9%99%A4%E9%93%BE%E8%A1%A8%E5%85%83%E7%B4%A0"><span class="nav-number">2.</span> <span class="nav-text">203.移除链表元素</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#206-%E5%8F%8D%E8%BD%AC%E9%93%BE%E8%A1%A8"><span class="nav-number">3.</span> <span class="nav-text">206. 反转链表</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%99%9A%E6%8B%9F%E5%A4%B4%E8%8A%82%E7%82%B9"><span class="nav-number">3.1.</span> <span class="nav-text">虚拟头节点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%8C%E6%8C%87%E9%92%88%E6%B3%95"><span class="nav-number">3.2.</span> <span class="nav-text">双指针法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#24-%E4%B8%A4%E4%B8%A4%E4%BA%A4%E6%8D%A2%E9%93%BE%E8%A1%A8%E4%B8%AD%E7%9A%84%E8%8A%82%E7%82%B9"><span class="nav-number">4.</span> <span class="nav-text">24. 两两交换链表中的节点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#19-%E5%88%A0%E9%99%A4%E9%93%BE%E8%A1%A8%E7%9A%84%E5%80%92%E6%95%B0%E7%AC%ACN%E4%B8%AA%E8%8A%82%E7%82%B9"><span class="nav-number">5.</span> <span class="nav-text">19.删除链表的倒数第N个节点</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%8C%E6%8C%87%E9%92%88"><span class="nav-number">5.1.</span> <span class="nav-text">双指针</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%9D%A2%E8%AF%95%E9%A2%98-02-07-%E9%93%BE%E8%A1%A8%E7%9B%B8%E4%BA%A4"><span class="nav-number">6.</span> <span class="nav-text">面试题 02.07. 链表相交</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%9D%E8%B7%AF"><span class="nav-number">6.1.</span> <span class="nav-text">思路</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#142-%E7%8E%AF%E5%BD%A2%E9%93%BE%E8%A1%A8-%E2%85%A1"><span class="nav-number">7.</span> <span class="nav-text">142.环形链表 Ⅱ</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%9D%E8%B7%AF-1"><span class="nav-number">7.1.</span> <span class="nav-text">思路</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">水更流</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">21</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">36</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/0shuigengliu" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;0shuigengliu" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://space.bilibili.com/289595050" title="bilibili → https:&#x2F;&#x2F;space.bilibili.com&#x2F;289595050" rel="noopener" target="_blank"><i class="fa fa-fw fa-bilibili"></i>bilibili</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">水更流</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+<div class="powered-by">
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <i class="fa fa-user-md"></i>
+    <span id="busuanzi_container_site_uv">
+        本站访客数:<span id="busuanzi_value_site_uv"></span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span id="busuanzi_container_site_pv">
+        本站访问量<span id="busuanzi_value_site_pv"></span>
+    </span>
+</div>
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

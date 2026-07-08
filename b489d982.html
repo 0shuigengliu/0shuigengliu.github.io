@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 8.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.shui2000.top","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="之前使用套件版本的qbittorrent进行种子的下载，发现qbittorrent经常性的卡死，遂决定转至docker版本的qbittorrent">
+<meta property="og:type" content="article">
+<meta property="og:title" content="群晖NAS的qbittorrent套件版本切换至docker版本">
+<meta property="og:url" content="https://www.shui2000.top/b489d982.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="之前使用套件版本的qbittorrent进行种子的下载，发现qbittorrent经常性的卡死，遂决定转至docker版本的qbittorrent">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.shui2000.top/b489d982/qbittorrent.png">
+<meta property="og:image" content="https://www.shui2000.top/b489d982/%E6%90%9C%E7%B4%A2%E6%B3%A8%E5%86%8C%E8%A1%A8.png">
+<meta property="og:image" content="https://www.shui2000.top/b489d982/%E8%AE%BE%E7%BD%AE%E7%AB%AF%E5%8F%A3%E6%98%A0%E5%B0%84.png">
+<meta property="og:image" content="https://www.shui2000.top/b489d982/%E8%AE%BE%E7%BD%AE%E7%AB%AF%E5%8F%A3%E6%98%A0%E5%B0%842.png">
+<meta property="og:image" content="https://www.shui2000.top/b489d982/%E8%AE%BE%E7%BD%AE%E6%96%87%E4%BB%B6%E6%98%A0%E5%B0%84.png">
+<meta property="og:image" content="https://www.shui2000.top/b489d982/%E8%AE%BE%E7%BD%AE%E6%96%87%E4%BB%B6%E6%98%A0%E5%B0%842.png">
+<meta property="og:image" content="https://www.shui2000.top/b489d982/%E8%AE%BE%E7%BD%AE%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F.png">
+<meta property="og:image" content="https://www.shui2000.top/b489d982/WebUi.png">
+<meta property="og:image" content="https://www.shui2000.top/b489d982/%E6%90%9C%E7%B4%A2qb%E7%9A%84%E6%89%80%E5%9C%A8%E6%96%87%E4%BB%B6%E5%A4%B9.png">
+<meta property="og:image" content="https://www.shui2000.top/b489d982/docker%E7%9A%84%E7%9B%AE%E6%A0%87%E7%9B%AE%E5%BD%95.png">
+<meta property="og:image" content="https://www.shui2000.top/b489d982/%E7%A7%8D%E5%AD%90%E4%B8%A2%E5%A4%B1.png">
+<meta property="og:image" content="https://www.shui2000.top/b489d982/%E7%A7%8D%E5%AD%90%E4%B8%A2%E5%A4%B12.png">
+<meta property="og:image" content="https://www.shui2000.top/b489d982/%E7%A7%8D%E5%AD%90%E4%B8%A2%E5%A4%B13.png">
+<meta property="og:image" content="https://www.shui2000.top/b489d982/%E7%A7%8D%E5%AD%90%E6%81%A2%E5%A4%8D.png">
+<meta property="article:published_time" content="2023-10-21T07:58:30.000Z">
+<meta property="article:modified_time" content="2025-01-16T16:45:37.000Z">
+<meta property="article:author" content="水更流">
+<meta property="article:tag" content="NAS">
+<meta property="article:tag" content="群晖">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.shui2000.top/b489d982/qbittorrent.png">
+
+<link rel="canonical" href="https://www.shui2000.top/b489d982.html">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>群晖NAS的qbittorrent套件版本切换至docker版本 | Hexo</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Hexo</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.shui2000.top/b489d982.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="水更流">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hexo">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          群晖NAS的qbittorrent套件版本切换至docker版本
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-10-21 15:58:30" itemprop="dateCreated datePublished" datetime="2023-10-21T15:58:30+08:00">2023-10-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2025-01-17 00:45:37" itemprop="dateModified" datetime="2025-01-17T00:45:37+08:00">2025-01-17</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%9E%8E%E6%8A%98%E8%85%BE/" itemprop="url" rel="index"><span itemprop="name">瞎折腾</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">之前使用套件版本的qbittorrent进行种子的下载，发现qbittorrent经常性的卡死，遂决定转至docker版本的qbittorrent</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="群晖NAS的qbittorrent套件版本切换至docker版本"><a href="#群晖NAS的qbittorrent套件版本切换至docker版本" class="headerlink" title="群晖NAS的qbittorrent套件版本切换至docker版本"></a>群晖NAS的qbittorrent套件版本切换至docker版本</h2><h3 id="问题来源"><a href="#问题来源" class="headerlink" title="问题来源"></a>问题来源</h3><p>1.之前使用套件版本的qbittorrent进行种子的下载，发现qbittorrent经常性的卡死，遂决定转至docker版本的qbittorrent</p>
+<img src="/b489d982/qbittorrent.png" class="" title="image-20231021160034283">
+
+<p>2.希望能够迁移的过程中保留之前正在下载的进程以及已经下载好的种子</p>
+<h3 id="一-进行dockers版本的安装"><a href="#一-进行dockers版本的安装" class="headerlink" title="一.进行dockers版本的安装"></a>一.进行dockers版本的安装</h3><p>1.搜索注册表进行安装</p>
+<img src="/b489d982/%E6%90%9C%E7%B4%A2%E6%B3%A8%E5%86%8C%E8%A1%A8.png" class="" title="image-20231021143646007">
+
+<p>2.设置好端口映射关系</p>
+<img src="/b489d982/%E8%AE%BE%E7%BD%AE%E7%AB%AF%E5%8F%A3%E6%98%A0%E5%B0%84.png" class="" title="image-20231021143907719">
+
+<p>容器默认设置的8080端口为webui的默认端口，我们需要将其固定为指定的端口，这里我们设置为8086.</p>
+<img src="/b489d982/%E8%AE%BE%E7%BD%AE%E7%AB%AF%E5%8F%A3%E6%98%A0%E5%B0%842.png" class="" title="image-20231021144029815">
+
+<p>3.设置文件映射关系</p>
+<p>我们需要自己创建config文件，与downloads文件。</p>
+<p>如果想要数据保留，<strong>downloads</strong>文件最好处于<strong>套件版本的qbittorrent的downloads文件</strong>的上层，即前者包含或等同于后者</p>
+<img src="/b489d982/%E8%AE%BE%E7%BD%AE%E6%96%87%E4%BB%B6%E6%98%A0%E5%B0%84.png" class="" title="image-20231021144446920">
+
+<img src="/b489d982/%E8%AE%BE%E7%BD%AE%E6%96%87%E4%BB%B6%E6%98%A0%E5%B0%842.png" class="" title="image-20231021144537791">
+
+<p>4.设置环境变量</p>
+<p>在环境变量中新增以下环境变量</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="string">PUID=1000</span></span><br><span class="line"><span class="bullet">-</span> <span class="string">PGID=1000</span></span><br><span class="line"><span class="bullet">-</span> <span class="string">TZ=Asia/Shanghai</span></span><br><span class="line"><span class="bullet">-</span> <span class="string">WEBUI_PORT=8080</span></span><br></pre></td></tr></table></figure>
+
+<img src="/b489d982/%E8%AE%BE%E7%BD%AE%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F.png" class="" title="image-20231021145625368">
+
+<p><strong>注意此时的WEBUI_PORT</strong>依然设置为8080，我们之前设置的端口映射是将WEBUI_PORT映射至8086</p>
+<h3 id="二、登录qbittorrent的WEBUI"><a href="#二、登录qbittorrent的WEBUI" class="headerlink" title="二、登录qbittorrent的WEBUI"></a>二、登录qbittorrent的WEBUI</h3><p>在本地计算器的浏览器中输入地址:<a target="_blank" rel="noopener" href="http://nasip:8086/%E5%9C%B0%E5%9D%80:8086/">http://NASIP:8086/地址:8086/</a> <em>(例如<a target="_blank" rel="noopener" href="http://192.168.10.13:8086/">http://192.168.10.13:8086/</a>)</em></p>
+<p>如果看到提示用户名和密码说明登录成功,默认用户名admin，默认密码adminadmin</p>
+<img src="/b489d982/WebUi.png" class="" title="image-20231021150108313">
+
+<p>如果看到<strong>Unauthorized</strong>的提醒</p>
+<p>我们需要将&#x2F;config&#x2F;qBittorrent&#x2F;qBittorrent.conf中的<code>WebUI\HostHeaderValidation=true</code></p>
+<p>修改为<code>WebUI\HostHeaderValidation=false</code>如果没有则添加上。</p>
+<p><em><a target="_blank" rel="noopener" href="https://github.com/qbittorrent/qBittorrent/issues/8095#issuecomment-472740702">问题解决参考</a></em></p>
+<h3 id="二、进行套件向docker的数据迁移，不迁移请无视"><a href="#二、进行套件向docker的数据迁移，不迁移请无视" class="headerlink" title="二、进行套件向docker的数据迁移，不迁移请无视"></a>二、进行套件向docker的数据迁移，不迁移请无视</h3><p>1.这里需要我们利用ssh对NAS进行操作，<strong>利用<code>sudo -i</code>指令进行root模式后</strong>，我们可以使用<code>ps -aux |grep qb</code>指令，（该指令的意义是列出系统所有进程，并过滤出名称中含有qb的进程）</p>
+<img src="/b489d982/%E6%90%9C%E7%B4%A2qb%E7%9A%84%E6%89%80%E5%9C%A8%E6%96%87%E4%BB%B6%E5%A4%B9.png" class="" title="image-20231021151203450">
+
+<p>2.可以看出套件版本的qBittorrent所处的大致位置，进入qBittorrent文件夹，<code>ls</code>列出文件结构，进入qBittorrent_conf目录</p>
+<p>3.利用<code>cp -r 原目录 去往目录</code>指令，复制<strong>套件config目录到docker中的config目录</strong></p>
+<p>4.利用<code>chown -R 1000:1000 config</code>指令将复制好的目录的拥有人pid和puid都改为1000（与docker容器环境变量一致），防止出现权限问题。</p>
+<p>5.同理复制授权<strong>套件目录qBittorrent&#x2F;data&#x2F;BT_backup</strong>，该文件夹存储的是套件的种子信息。图片为docker的目标目录。</p>
+<img src="/b489d982/docker%E7%9A%84%E7%9B%AE%E6%A0%87%E7%9B%AE%E5%BD%95.png" class="" title="image-20231021152224233">
+
+<p>6.重启docker的qbittorrent容器，登录WEBUI，此时大部分种子都提示为丢失文件状态</p>
+<img src="/b489d982/%E7%A7%8D%E5%AD%90%E4%B8%A2%E5%A4%B1.png" class="" title="image-20231021152530855">
+
+
+
+<p>7.右键丢失文件的种子，选择更改保存位置，将保存位置修改为原文件现在所处的相对于容器（docker 版本qbittorrent）映射位置</p>
+<img src="/b489d982/%E7%A7%8D%E5%AD%90%E4%B8%A2%E5%A4%B12.png" class="" title="image-20231021152647572">
+
+<p>例如，我套件下载好的动漫原本所处位置为&#x2F;volume1&#x2F;video&#x2F;download&#x2F;动漫</p>
+<p>我进行映射时，将&#x2F;volume1&#x2F;video&#x2F;download&#x2F; 映射为&#x2F;downloads 目录，那么我需要修改保存位置为&#x2F;downloads&#x2F;动漫 就可以了</p>
+<img src="/b489d982/%E7%A7%8D%E5%AD%90%E4%B8%A2%E5%A4%B13.png" class="" title="image-20231021153050982">
+
+<img src="/b489d982/%E7%A7%8D%E5%AD%90%E6%81%A2%E5%A4%8D.png" class="" title="image-20231021153057116">
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/NAS/" rel="tag"># NAS</a>
+              <a href="/tags/%E7%BE%A4%E6%99%96/" rel="tag"># 群晖</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/6799903a.html" rel="prev" title="哈希表相关算法">
+      <i class="fa fa-chevron-left"></i> 哈希表相关算法
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/f7219721.html" rel="next" title="校园网环境下设置IPV6地址">
+      校园网环境下设置IPV6地址 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BE%A4%E6%99%96NAS%E7%9A%84qbittorrent%E5%A5%97%E4%BB%B6%E7%89%88%E6%9C%AC%E5%88%87%E6%8D%A2%E8%87%B3docker%E7%89%88%E6%9C%AC"><span class="nav-number">1.</span> <span class="nav-text">群晖NAS的qbittorrent套件版本切换至docker版本</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E6%9D%A5%E6%BA%90"><span class="nav-number">1.1.</span> <span class="nav-text">问题来源</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%80-%E8%BF%9B%E8%A1%8Cdockers%E7%89%88%E6%9C%AC%E7%9A%84%E5%AE%89%E8%A3%85"><span class="nav-number">1.2.</span> <span class="nav-text">一.进行dockers版本的安装</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E7%99%BB%E5%BD%95qbittorrent%E7%9A%84WEBUI"><span class="nav-number">1.3.</span> <span class="nav-text">二、登录qbittorrent的WEBUI</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E8%BF%9B%E8%A1%8C%E5%A5%97%E4%BB%B6%E5%90%91docker%E7%9A%84%E6%95%B0%E6%8D%AE%E8%BF%81%E7%A7%BB%EF%BC%8C%E4%B8%8D%E8%BF%81%E7%A7%BB%E8%AF%B7%E6%97%A0%E8%A7%86"><span class="nav-number">1.4.</span> <span class="nav-text">二、进行套件向docker的数据迁移，不迁移请无视</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">水更流</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">21</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">36</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/0shuigengliu" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;0shuigengliu" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://space.bilibili.com/289595050" title="bilibili → https:&#x2F;&#x2F;space.bilibili.com&#x2F;289595050" rel="noopener" target="_blank"><i class="fa fa-fw fa-bilibili"></i>bilibili</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">水更流</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+<div class="powered-by">
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <i class="fa fa-user-md"></i>
+    <span id="busuanzi_container_site_uv">
+        本站访客数:<span id="busuanzi_value_site_uv"></span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span id="busuanzi_container_site_pv">
+        本站访问量<span id="busuanzi_value_site_pv"></span>
+    </span>
+</div>
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
